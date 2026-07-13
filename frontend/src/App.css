@@ -1,0 +1,172 @@
+html, body {
+  height: 100%;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  color: #333;
+  overflow-x: hidden;
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.page-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.main-nav {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background-color: #fafafa;
+  border-bottom: 1px solid #ddd;
+}
+
+.nav-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  color: white;
+  cursor: pointer;
+}
+
+.btn-home {
+  background-color: #2e7d32;
+}
+
+.btn-plan {
+  background-color: #c62828;
+}
+
+.btn-menu {
+  background-color: #1565c0;
+}
+
+.home {
+  background-color: #fff3e0;
+  width: min(100%, 840px);
+  min-height: calc(100vh - 112px);
+  padding: 20px 20px 18px;
+  margin: 0 auto;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+  box-sizing: border-box;
+}
+
+.home h1 {
+  margin-bottom: 8px;
+  font-size: clamp(26px, 4vw, 36px);
+  line-height: 1.1;
+}
+
+.home-image {
+  width: 100%;
+  height: min(320px, 40vh);
+  object-fit: cover;
+  border-radius: 18px;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 768px) {
+  .home {
+    padding: 16px 14px;
+    width: min(100%, 680px);
+    min-height: calc(100vh - 104px);
+  }
+
+  .home-image {
+    height: min(260px, 32vh);
+  }
+}
+
+@media (max-width: 520px) {
+  .home {
+    padding: 14px 12px;
+    width: 100%;
+    min-height: calc(100vh - 92px);
+  }
+
+  .home h1 {
+    font-size: 24px;
+  }
+
+  .home-image {
+    height: min(200px, 28vh);
+  }
+}
+
+.btn {
+  display: inline-block;
+  margin-top: 20px;
+  padding: 10px 20px;
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+}
+
+.menu, .plans {
+  padding: 40px 20px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.site-footer {
+  background-color: #fafafa;
+  border-top: 1px solid #ddd;
+  padding: 24px 20px;
+  text-align: center;
+  color: #555;
+  font-size: 14px;
+}
+
+.meal-group {
+  margin-bottom: 20px;
+}
+
+.plan-cards {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.plan-card {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 20px;
+  flex: 1;
+  min-width: 250px;
+}
+
+.plan-card .price {
+  font-size: 20px;
+  font-weight: bold;
+  color: #2e7d32;
+}
+
+.plan-card button {
+  margin-top: 15px;
+  padding: 10px 15px;
+  background-color: #e65100;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.addon-note {
+  margin-top: 20px;
+  font-style: italic;
+  color: #555;
+}
