@@ -2,6 +2,7 @@ import { useState } from 'react'
 import HomePage from './components/HomePage.jsx'
 import MenuDisplay from './components/MenuDisplay.jsx'
 import SubscriptionPlans from './components/SubscriptionPlans.jsx'
+import DeliveryOptions from './components/DeliveryOptions.jsx'
 
 function App() {
   const [page, setPage] = useState('home')
@@ -18,6 +19,9 @@ function App() {
         <button className="nav-btn btn-plan" onClick={() => setPage('plans')}>
           View Plans
         </button>
+        <button className="nav-btn btn-delivery" onClick={() => setPage('delivery')}>
+          Delivery Options
+        </button>
       </header>
 
       <main className="page-body">
@@ -29,6 +33,7 @@ function App() {
         )}
         {page === 'plans' && <SubscriptionPlans />}
         {page === 'menu' && <MenuDisplay />}
+        {page === 'delivery' && <DeliveryOptions />}
       </main>
 
       <footer className="site-footer">
