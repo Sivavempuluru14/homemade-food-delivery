@@ -25,9 +25,15 @@ app.use("/api/subscriptions", subscriptionRoutes);
 app.use("/api/payment", paymentRoutes);
 
 const PORT = process.env.PORT || 5000;
+const mongoUri = process.env.MONGO_URI;
+
+if (!mongoUri) {
+  console.error("Error: MONGO_URI is not defined in .env");
+  process.exit(1);
+}
 
 mongoose
-  .connect(process.env.MONGO_URI)
+  .connect(mongoUri)
   .then(() => {
     console.log("MongoDB Connected");
 
@@ -36,5 +42,6 @@ mongoose
     });
   })
   .catch((err) => {
-    console.log(err);
+    console.error("MongoDB connection failed:", err.message);
+    process.exit(1);
   });

@@ -48,4 +48,20 @@ const getPayments = async (req, res) => {
   }
 };
 
-module.exports = { createPayment, getPayments };
+const getPaymentById = async (req, res) => {
+  try {
+    const payment = await Payment.findById(req.params.id);
+
+    if (!payment) {
+      return res.status(404).json({ message: "Payment not found" });
+    }
+
+    res.status(200).json({ payment });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+module.exports = { createPayment, getPayments, getPaymentById };
