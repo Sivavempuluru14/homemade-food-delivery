@@ -17,12 +17,7 @@ import Register from "./pages/Register";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 
-import OrderSummary from "./pages/OrderSummary";
-import Payment from "./pages/Payment";
-import PaymentSuccess from "./pages/PaymentSuccess";
-import Confirmation from "./pages/Confirmation";
-import PaymentHistory from "./pages/PaymentHistory";
-import PaymentDetails from "./pages/PaymentDetails";
+
 import VerifyOtp from "./pages/VerifyOtp";
 
 const initialFormState = {
@@ -441,13 +436,7 @@ function MainLayout() {
           <Route path="/register" element={<Register />} />
           <Route path="/verify-otp" element={<VerifyOtp />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/order-summary" element={<OrderSummary />} />
-          <Route path="/payment" element={<Payment />} />
-          <Route path="/payment-success" element={<PaymentSuccess />} />
-          <Route path="/confirmation" element={<Confirmation />} />
-          <Route path="/payment-history" element={<PaymentHistory />} />
-          <Route path="/payment-details" element={<PaymentDetails />} />
+          <Route path="/profile" element={<Profile />} />     
         </Routes>
       </main>
 
