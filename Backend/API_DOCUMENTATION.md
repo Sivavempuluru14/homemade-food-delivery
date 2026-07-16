@@ -4,25 +4,211 @@
 
 ```http
 http://localhost:5000
-```
+````
 
 ---
 
 # 🔐 Authentication APIs
 
-## 1. Register User
+Authentication module handles:
 
-### Method
+* User Registration
+* Email OTP Verification
+* WhatsApp OTP Verification
+* User Login
+* JWT Authentication
+* User Profile Access
+
+---
+
+# 1. Send OTP API
+
+## Method
+
 ```http
 POST
 ```
 
-### Endpoint
+## Endpoint
+
+```http
+/api/auth/send-otp
+```
+
+---
+
+## Description
+
+This API sends:
+
+* Email OTP through Nodemailer
+* WhatsApp OTP through whatsapp-web.js
+
+before user registration.
+
+---
+
+## Request Body
+
+```json
+{
+  "email": "siva@gmail.com",
+  "mobile": "9876543210"
+}
+```
+
+---
+
+## Success Response
+
+```json
+{
+  "message": "Email OTP and WhatsApp OTP Sent Successfully"
+}
+```
+
+---
+
+## OTP Database Structure
+
+After sending OTP:
+
+```json
+{
+  "email": "siva@gmail.com",
+  "mobile": "9876543210",
+  "emailOtp": "483921",
+  "whatsappOtp": "716504",
+  "verified": false
+}
+```
+
+---
+
+# 2. Verify OTP API
+
+## Method
+
+```http
+POST
+```
+
+## Endpoint
+
+```http
+/api/auth/verify-otp
+```
+
+---
+
+## Description
+
+This API verifies:
+
+* Email OTP
+* WhatsApp OTP
+
+Only after successful verification user can register.
+
+---
+
+## Request Body
+
+```json
+{
+  "email": "siva@gmail.com",
+  "mobile": "9876543210",
+  "emailOtp": "483921",
+  "whatsappOtp": "716504"
+}
+```
+
+---
+
+## Success Response
+
+```json
+{
+  "message": "Email and Mobile Verified Successfully"
+}
+```
+
+---
+
+## OTP Status After Verification
+
+Database will update:
+
+```json
+{
+  "verified": true
+}
+```
+
+---
+
+## Error Responses
+
+### Invalid Email OTP
+
+```json
+{
+  "message": "Invalid Email OTP"
+}
+```
+
+---
+
+### Invalid WhatsApp OTP
+
+```json
+{
+  "message": "Invalid WhatsApp OTP"
+}
+```
+
+---
+
+### Expired OTP
+
+```json
+{
+  "message": "OTP Expired or Not Found"
+}
+```
+
+---
+
+# 3. Register User API
+
+## Method
+
+```http
+POST
+```
+
+## Endpoint
+
 ```http
 /api/auth/register
 ```
 
-### Request Body
+---
+
+## Description
+
+Creates a new user account.
+
+Before registration backend checks:
+
+* Email OTP verification
+* WhatsApp OTP verification
+
+If OTP is not verified, account creation is blocked.
+
+---
+
+## Request Body
 
 ```json
 {
@@ -34,7 +220,35 @@ POST
 }
 ```
 
-### Success Response
+---
+
+## OTP Security Validation
+
+Backend checks:
+
+```json
+{
+  "email": "siva@gmail.com",
+  "mobile": "9876543210",
+  "verified": true
+}
+```
+
+---
+
+## If OTP Not Verified
+
+Response:
+
+```json
+{
+  "message": "Please verify OTP first"
+}
+```
+
+---
+
+## Success Response
 
 ```json
 {
@@ -44,12 +258,18 @@ POST
     "fullName": "Siva",
     "email": "siva@gmail.com",
     "mobile": "9876543210",
-    "location": "Guindy"
+    "location": "Guindy",
+    "emailVerified": true,
+    "mobileVerified": true
   }
 }
 ```
 
-### Error Response
+---
+
+## Error Response
+
+### Existing User
 
 ```json
 {
@@ -59,19 +279,29 @@ POST
 
 ---
 
-## 2. Login User
+# 4. Login User API
 
-### Method
+## Method
+
 ```http
 POST
 ```
 
-### Endpoint
+## Endpoint
+
 ```http
 /api/auth/login
 ```
 
-### Request Body
+---
+
+## Description
+
+Authenticates registered users and generates JWT token.
+
+---
+
+## Request Body
 
 ```json
 {
@@ -80,7 +310,9 @@ POST
 }
 ```
 
-### Success Response
+---
+
+## Success Response
 
 ```json
 {
@@ -96,13 +328,21 @@ POST
 }
 ```
 
-### Error Response
+---
+
+## Error Responses
+
+### User Not Found
 
 ```json
 {
   "message": "User not found"
 }
 ```
+
+---
+
+### Invalid Password
 
 ```json
 {
@@ -112,25 +352,31 @@ POST
 
 ---
 
-## 3. Get User Profile
+# 5. Get User Profile API
 
-### Method
+## Method
+
 ```http
 GET
 ```
 
-### Endpoint
+## Endpoint
+
 ```http
 /api/auth/profile
 ```
 
-### Headers
+---
+
+## Headers
 
 ```http
 Authorization: Bearer JWT_TOKEN
 ```
 
-### Success Response
+---
+
+## Success Response
 
 ```json
 {
@@ -142,7 +388,9 @@ Authorization: Bearer JWT_TOKEN
 }
 ```
 
-### Error Response
+---
+
+## Error Response
 
 ```json
 {
@@ -152,21 +400,84 @@ Authorization: Bearer JWT_TOKEN
 
 ---
 
-# 🍽️ Food Menu APIs
+# 🔒 Authentication Flow
 
-## 1. Add Food Item
+```
+User enters Email + Mobile
 
-### Method
-```http
-POST
+          ↓
+
+Send OTP API
+
+          ↓
+
+Email OTP Sent
++
+WhatsApp OTP Sent
+
+          ↓
+
+Verify OTP API
+
+          ↓
+
+OTP Verified
+(verified:true)
+
+          ↓
+
+Register User API
+
+          ↓
+
+Create Account
+
+          ↓
+
+Welcome Email Sent
+
+          ↓
+
+Welcome WhatsApp Message Sent
 ```
 
-### Endpoint
+---
+
+
+# 🍽️ Food Menu APIs
+
+Food Menu module handles:
+
+- Adding food items
+- Fetching available food items
+- Updating food details
+- Deleting food items
+
+---
+
+# 1. Add Food Item API
+
+## Method
+
+```http
+POST
+````
+
+## Endpoint
+
 ```http
 /api/menu
 ```
 
-### Request Body
+---
+
+## Description
+
+Admin can add new homemade food items into the menu.
+
+---
+
+## Request Body
 
 ```json
 {
@@ -178,7 +489,9 @@ POST
 }
 ```
 
-### Success Response
+---
+
+## Success Response
 
 ```json
 {
@@ -196,19 +509,29 @@ POST
 
 ---
 
-## 2. Get All Food Items
+# 2. Get All Food Items API
 
-### Method
+## Method
+
 ```http
 GET
 ```
 
-### Endpoint
+## Endpoint
+
 ```http
 /api/menu
 ```
 
-### Success Response
+---
+
+## Description
+
+Returns all available food items.
+
+---
+
+## Success Response
 
 ```json
 [
@@ -225,25 +548,31 @@ GET
 
 ---
 
-## 3. Update Food Item
+# 3. Update Food Item API
 
-### Method
+## Method
+
 ```http
 PUT
 ```
 
-### Endpoint
+## Endpoint
+
 ```http
 /api/menu/:id
 ```
 
-### Example
+---
+
+## Example
 
 ```http
 /api/menu/food_id
 ```
 
-### Request Body
+---
+
+## Request Body
 
 ```json
 {
@@ -255,7 +584,9 @@ PUT
 }
 ```
 
-### Success Response
+---
+
+## Success Response
 
 ```json
 {
@@ -265,25 +596,31 @@ PUT
 
 ---
 
-## 4. Delete Food Item
+# 4. Delete Food Item API
 
-### Method
+## Method
+
 ```http
 DELETE
 ```
 
-### Endpoint
+## Endpoint
+
 ```http
 /api/menu/:id
 ```
 
-### Example
+---
+
+## Example
 
 ```http
 /api/menu/food_id
 ```
 
-### Success Response
+---
+
+## Success Response
 
 ```json
 {
@@ -295,19 +632,60 @@ DELETE
 
 # 📦 Subscription APIs
 
-## 1. Create Subscription
+Subscription module manages:
 
-### Method
+* Monthly meal plans
+* Veg subscription
+* Non-Veg subscription
+* Lunch box setup charges
+
+---
+
+# Subscription Plans
+
+## Veg Plan
+
+```text
+Monthly Charge: ₹6500
+Lunch Box Setup: ₹1000
+Total Amount: ₹7500
+```
+
+---
+
+## Non-Veg Plan
+
+```text
+Monthly Charge: ₹7500
+Lunch Box Setup: ₹1000
+Total Amount: ₹8500
+```
+
+---
+
+# 1. Create Subscription API
+
+## Method
+
 ```http
 POST
 ```
 
-### Endpoint
+## Endpoint
+
 ```http
 /api/subscriptions
 ```
 
-### Veg Plan Request
+---
+
+## Description
+
+Creates a monthly food subscription for a registered user.
+
+---
+
+## Veg Plan Request
 
 ```json
 {
@@ -320,7 +698,9 @@ POST
 }
 ```
 
-### Non-Veg Plan Request
+---
+
+## Non-Veg Plan Request
 
 ```json
 {
@@ -333,7 +713,9 @@ POST
 }
 ```
 
-### Success Response
+---
+
+## Success Response
 
 ```json
 {
@@ -343,19 +725,29 @@ POST
 
 ---
 
-## 2. Get All Subscriptions
+# 2. Get All Subscriptions API
 
-### Method
+## Method
+
 ```http
 GET
 ```
 
-### Endpoint
+## Endpoint
+
 ```http
 /api/subscriptions
 ```
 
-### Success Response
+---
+
+## Description
+
+Returns all subscription records.
+
+---
+
+## Success Response
 
 ```json
 [
@@ -375,19 +767,37 @@ GET
 
 # 💳 Payment APIs
 
-## 1. Create Payment
+Payment module handles:
 
-### Method
+* Payment creation
+* Payment history
+* Payment details
+
+---
+
+# 1. Create Payment API
+
+## Method
+
 ```http
 POST
 ```
 
-### Endpoint
+## Endpoint
+
 ```http
 /api/payment
 ```
 
-### Request Body
+---
+
+## Description
+
+Stores payment transaction details after subscription payment.
+
+---
+
+## Request Body
 
 ```json
 {
@@ -399,7 +809,9 @@ POST
 }
 ```
 
-### Success Response
+---
+
+## Success Response
 
 ```json
 {
@@ -418,7 +830,9 @@ POST
 }
 ```
 
-### Error Response
+---
+
+## Error Response
 
 ```json
 {
@@ -428,19 +842,29 @@ POST
 
 ---
 
-## 2. Get Payment History
+# 2. Get Payment History API
 
-### Method
+## Method
+
 ```http
 GET
 ```
 
-### Endpoint
+## Endpoint
+
 ```http
 /api/payment/history
 ```
 
-### Success Response
+---
+
+## Description
+
+Returns all payments made by users.
+
+---
+
+## Success Response
 
 ```json
 [
@@ -458,7 +882,9 @@ GET
 ]
 ```
 
-### Error Response
+---
+
+## Error Response
 
 ```json
 {
@@ -468,25 +894,31 @@ GET
 
 ---
 
-## 3. Get Payment By ID
+# 3. Get Payment By ID API
 
-### Method
+## Method
+
 ```http
 GET
 ```
 
-### Endpoint
+## Endpoint
+
 ```http
 /api/payment/:id
 ```
 
-### Example
+---
+
+## Example
 
 ```http
 /api/payment/6874f123456789
 ```
 
-### Success Response
+---
+
+## Success Response
 
 ```json
 {
@@ -502,7 +934,9 @@ GET
 }
 ```
 
-### Error Response
+---
+
+## Error Response
 
 ```json
 {
@@ -514,112 +948,326 @@ GET
 
 # ⚙️ Environment Variables (.env)
 
-Create a `.env` file inside the `Backend` folder and add the following:
+Create a `.env` file inside the `Backend` folder.
+
+---
+
+## Environment Configuration
 
 ```env
 PORT=5000
 
-# MongoDB Atlas Connection String
+# MongoDB Atlas Connection
 MONGO_URI=mongodb+srv://<DB_USERNAME>:<DB_PASSWORD>@<CLUSTER_NAME>.mongodb.net/HomemadeFoodDB?retryWrites=true&w=majority
 
 # JWT Secret Key
 JWT_SECRET=your_secret_key
 
-# Email Configuration
+
+# Email Configuration (Nodemailer)
 EMAIL_USER=your_email@gmail.com
 EMAIL_PASS=your_gmail_app_password
+````
 
-# Twilio WhatsApp Configuration
-TWILIO_ACCOUNT_SID=your_twilio_account_sid
-TWILIO_AUTH_TOKEN=your_twilio_auth_token
-TWILIO_WHATSAPP_NUMBER=whatsapp:+14155238886
-```
+---
 
-### Example
+## Example `.env`
 
 ```env
 PORT=5000
+
 MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/HomemadeFoodDB?retryWrites=true&w=majority
+
 JWT_SECRET=homemadefoodsecret
+
 
 EMAIL_USER=example@gmail.com
 EMAIL_PASS=your_app_password
-
-TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxx
-TWILIO_AUTH_TOKEN=xxxxxxxxxxxxxxxxxxxx
-TWILIO_WHATSAPP_NUMBER=whatsapp:+14155238886
 ```
 
 ---
 
 # 📋 Environment Variables Summary
 
-| Variable | Description | Example |
-|----------|-------------|----------|
-| PORT | Port number on which the server runs | 5000 |
-| MONGO_URI | MongoDB Atlas connection string used to connect to the cloud database | mongodb+srv://username:password@cluster.mongodb.net/HomemadeFoodDB |
-| JWT_SECRET | Secret key used for JWT token generation and verification | homemadefoodsecret |
-| EMAIL_USER | Gmail account used to send automated emails | example@gmail.com |
-| EMAIL_PASS | Gmail App Password used by Nodemailer | xxxxxxxx |
-| TWILIO_ACCOUNT_SID | Twilio Account SID for WhatsApp integration | ACxxxxxxxx |
-| TWILIO_AUTH_TOKEN | Twilio Authentication Token | xxxxxxxxx |
-| TWILIO_WHATSAPP_NUMBER | Twilio Sandbox WhatsApp number | whatsapp:+14155238886 |
+| Variable   | Description                           | Example                                                            |
+| ---------- | ------------------------------------- | ------------------------------------------------------------------ |
+| PORT       | Backend server running port           | 5000                                                               |
+| MONGO_URI  | MongoDB Atlas connection string       | mongodb+srv://username:password@cluster.mongodb.net/HomemadeFoodDB |
+| JWT_SECRET | Secret key for JWT authentication     | homemadefoodsecret                                                 |
+| EMAIL_USER | Gmail account used for sending emails | [example@gmail.com](mailto:example@gmail.com)                      |
+| EMAIL_PASS | Gmail App Password for Nodemailer     | xxxxxxxx                                                           |
 
 ---
 
 # 📧 Email Notification
 
-The application uses **Nodemailer** to automatically send a welcome email after successful user registration.
+The application uses **Nodemailer** for automated email communication.
 
-**Workflow:**
+---
+
+## Email Service
+
+Technology Used:
+
+* Node.js
+* Express.js
+* Nodemailer
+* Gmail App Password
+
+---
+
+# Email Workflow
 
 ```text
 User Registration
-       ↓
+
+        ↓
+
 User Data Saved in MongoDB
-       ↓
+
+        ↓
+
+sendEmail()
+
+        ↓
+
 Welcome Email Sent Automatically
 ```
 
-**Technologies Used:**
-- Node.js
-- Express.js
-- Nodemailer
-- Gmail App Password
-
 ---
 
-# 💬 WhatsApp Notification
+# Email Notification Example
 
-The application uses **Twilio WhatsApp Sandbox API** to automatically send a welcome WhatsApp message after successful user registration.
+```
+Hi Siva,
 
-**Workflow:**
+Welcome to Homemade Food Delivery.
 
-```text
-User Registration
-       ↓
-User Data Saved in MongoDB
-       ↓
-Welcome WhatsApp Message Sent Automatically
+Your registration has been completed successfully.
+
+Thank you for joining with us.
 ```
 
-**Technologies Used:**
-- Node.js
-- Express.js
-- Twilio WhatsApp Sandbox API
+---
 
-**Note:**
-- Twilio Sandbox is used only for testing purposes.
-- During testing, only the mobile numbers that join the Twilio Sandbox can receive WhatsApp messages.
-- To send WhatsApp messages to all users in production, a **Twilio Paid Account**, **WhatsApp Business API approval**, and a **verified business number** are required.
+# 💬 WhatsApp Automation
+
+## WhatsApp Service
+
+Previously Twilio WhatsApp API was used.
+
+Now Twilio has been removed.
+
+WhatsApp automation is implemented using:
+
+* whatsapp-web.js
+* WhatsApp Web Session
+* QR Code Authentication
 
 ---
 
-# 🔒 Security Note
+# Installation
 
-- Never upload the `.env` file to GitHub.
-- Add `.env` to `.gitignore`.
-- Do not expose passwords, tokens, or API keys publicly.
+Install required packages:
+
+```bash
+npm install whatsapp-web.js qrcode-terminal
+```
+
+---
+
+# WhatsApp Client Configuration
+
+Example:
+
+```javascript
+const { Client, LocalAuth } = require("whatsapp-web.js");
+
+
+const client = new Client({
+
+    authStrategy: new LocalAuth()
+
+});
+```
+
+---
+
+# QR Code Authentication Flow
+
+First time backend server starts:
+
+```text
+Server Started
+
+        ↓
+
+WhatsApp Client Initializing
+
+        ↓
+
+QR Code Generated
+
+        ↓
+
+Scan QR Code using WhatsApp
+
+        ↓
+
+WhatsApp Client Ready
+```
+
+---
+
+After successful login:
+
+```
+✅ WhatsApp Client Ready
+```
+
+Session will be stored automatically.
+
+Next server restart:
+
+```
+Server Start
+
+        ↓
+
+Existing Session Loaded
+
+        ↓
+
+No QR Scan Required
+```
+
+---
+
+# WhatsApp OTP Flow
+
+```text
+User enters Email + Mobile
+
+        ↓
+
+Generate OTP
+
+        ↓
+
+Email OTP Sent
+
+        ↓
+
+WhatsApp OTP Sent
+(using whatsapp-web.js)
+
+        ↓
+
+User verifies OTP
+```
+
+---
+
+# Welcome WhatsApp Message Flow
+
+```text
+Successful Registration
+
+        ↓
+
+sendWhatsapp()
+
+        ↓
+
+whatsapp-web.js
+
+        ↓
+
+Welcome WhatsApp Message Sent
+```
+
+---
+
+# WhatsApp Message Example
+
+```
+Hi Siva,
+
+Welcome to Homemade Food Delivery.
+
+Your registration is completed successfully.
+
+Thank you for joining us.
+```
+
+---
+
+# 🛠 Technology Stack
+
+| Feature             | Technology             |
+| ------------------- | ---------------------- |
+| Frontend            | React.js               |
+| Backend             | Node.js + Express.js   |
+| Database            | MongoDB Atlas          |
+| Authentication      | JWT                    |
+| Password Security   | bcrypt                 |
+| Email Service       | Nodemailer             |
+| WhatsApp Automation | whatsapp-web.js        |
+| OTP Management      | MongoDB OTP Collection |
+| API Testing         | Postman                |
+
+---
+
+# 🔒 Security Notes
+
+The application follows these security practices:
+
+## 1. OTP Verification
+
+* User must verify Email OTP.
+* User must verify WhatsApp OTP.
+* Registration is blocked without OTP verification.
+
+---
+
+## 2. Password Security
+
+Passwords are encrypted using bcrypt before storing in database.
+
+Example:
+
+```
+Original Password:
+
+Password@123
+
+
+Stored Password:
+
+$2a$10$xxxxxxxxxxxxxxxx
+```
+
+---
+
+## 3. JWT Authentication
+
+Protected APIs require JWT token.
+
+Example:
+
+```http
+Authorization: Bearer JWT_TOKEN
+```
+
+---
+
+## 4. Environment Security
+
+Never upload `.env` file to GitHub.
+
+Add `.env` into `.gitignore`.
+
+Example:
 
 ```gitignore
 .env
@@ -627,20 +1275,103 @@ Welcome WhatsApp Message Sent Automatically
 
 ---
 
-# 📋 API Summary
+## 5. Sensitive Data Protection
 
-| Method | Endpoint | Description |
-|--------|-----------|-------------|
-| POST | /api/auth/register | Register a New User + Send Welcome Email + Send WhatsApp Message |
-| POST | /api/auth/login | Login User and Generate JWT Token |
-| GET | /api/auth/profile | Get Logged-in User Profile |
-| POST | /api/menu | Add a New Food Item |
-| GET | /api/menu | Get All Food Items |
-| PUT | /api/menu/:id | Update Food Item by ID |
-| DELETE | /api/menu/:id | Delete Food Item by ID |
-| POST | /api/subscriptions | Create a New Subscription |
-| GET | /api/subscriptions | Get All Subscriptions |
-| GET | /api/subscriptions/:id | Get Subscription by ID |
-| POST | /api/payment | Create a New Payment |
-| GET | /api/payment/history | Get Payment History |
-| GET | /api/payment/:id | Get Payment by ID |
+Never expose:
+
+* Database password
+* JWT secret key
+* Email password
+* API credentials
+
+---
+
+# 🔄 Complete Application Flow
+
+```text
+User Registration
+
+        ↓
+
+Send OTP API
+
+        ↓
+
+Email OTP
++
+WhatsApp OTP
+
+        ↓
+
+Verify OTP API
+
+        ↓
+
+OTP Verified
+
+        ↓
+
+Register User API
+
+        ↓
+
+Create User Account
+
+        ↓
+
+Welcome Email Sent
+
+        ↓
+
+Welcome WhatsApp Message Sent
+
+        ↓
+
+User Login
+
+        ↓
+
+JWT Token Generated
+
+        ↓
+
+Access Protected APIs
+```
+
+---
+
+# 📋 Complete API Summary
+
+| Method | Endpoint             | Description                       |
+| ------ | -------------------- | --------------------------------- |
+| POST   | /api/auth/send-otp   | Send Email and WhatsApp OTP       |
+| POST   | /api/auth/verify-otp | Verify Email and WhatsApp OTP     |
+| POST   | /api/auth/register   | Register New User                 |
+| POST   | /api/auth/login      | Login User and Generate JWT Token |
+| GET    | /api/auth/profile    | Get Logged-in User Profile        |
+| POST   | /api/menu            | Add New Food Item                 |
+| GET    | /api/menu            | Get All Food Items                |
+| PUT    | /api/menu/:id        | Update Food Item                  |
+| DELETE | /api/menu/:id        | Delete Food Item                  |
+| POST   | /api/subscriptions   | Create Subscription               |
+| GET    | /api/subscriptions   | Get All Subscriptions             |
+| POST   | /api/payment         | Create Payment                    |
+| GET    | /api/payment/history | Get Payment History               |
+| GET    | /api/payment/:id     | Get Payment Details By ID         |
+
+---
+
+# ✅ Documentation Updated
+
+Implemented Features:
+
+✔ Email OTP Verification
+✔ WhatsApp OTP Verification
+✔ OTP Security Before Registration
+✔ JWT Authentication
+✔ Password Encryption
+✔ Automated Welcome Email
+✔ WhatsApp Automation using whatsapp-web.js
+✔ Food Menu Management
+✔ Monthly Subscription Plans
+✔ Payment Management

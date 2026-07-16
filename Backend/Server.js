@@ -1,4 +1,5 @@
 require("dotenv").config();
+require("./utils/whatsappClient");
 
 const express = require("express");
 const mongoose = require("mongoose");
@@ -9,9 +10,6 @@ const menuRoutes = require("./routes/menuRoutes");
 const subscriptionRoutes = require("./routes/subscriptionRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 
-console.log("TWILIO SID:", process.env.TWILIO_ACCOUNT_SID);
-console.log("TWILIO TOKEN:", process.env.TWILIO_AUTH_TOKEN);
-console.log("TWILIO NUMBER:", process.env.TWILIO_WHATSAPP_NUMBER);
 
 const app = express();
 
