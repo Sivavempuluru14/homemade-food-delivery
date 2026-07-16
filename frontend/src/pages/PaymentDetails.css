@@ -1,0 +1,49 @@
+.details-container{
+display:flex;
+justify-content:center;
+padding:50px;
+background: linear-gradient(180deg, #FFF8ED 0%, #F7E8C8 100%);
+}
+
+.details-card{
+width:420px;
+padding:30px;
+ background: linear-gradient(90deg, #e7d9c1, #e6cc85);
+box-shadow:0 5px 15px rgba(0,0,0,.2);
+border-radius:10px;
+}
+
+.details-card p{
+margin:15px 0;
+}
+
+.details-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.back-btn,
+.home-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.back-btn {
+  background: #7e57c2;
+  color: white;
+}
+
+.home-btn {
+  background: #4caf50;
+  color: white;
+}
+
+.back-btn:hover,
+.home-btn:hover {
+  opacity: 0.9;
+}
