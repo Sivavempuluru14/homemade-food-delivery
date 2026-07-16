@@ -518,16 +518,36 @@ Create a `.env` file inside the `Backend` folder and add the following:
 
 ```env
 PORT=5000
-MONGO_URI=your_mongodb_connection_string
+
+# MongoDB Atlas Connection String
+MONGO_URI=mongodb+srv://<DB_USERNAME>:<DB_PASSWORD>@<CLUSTER_NAME>.mongodb.net/HomemadeFoodDB?retryWrites=true&w=majority
+
+# JWT Secret Key
 JWT_SECRET=your_secret_key
+
+# Email Configuration
+EMAIL_USER=your_email@gmail.com
+EMAIL_PASS=your_gmail_app_password
+
+# Twilio WhatsApp Configuration
+TWILIO_ACCOUNT_SID=your_twilio_account_sid
+TWILIO_AUTH_TOKEN=your_twilio_auth_token
+TWILIO_WHATSAPP_NUMBER=whatsapp:+14155238886
 ```
 
 ### Example
 
 ```env
 PORT=5000
-MONGO_URI=mongodb://127.0.0.1:27017/homemade_food_delivery
-JWT_SECRET=mySecretKey123
+MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/HomemadeFoodDB?retryWrites=true&w=majority
+JWT_SECRET=homemadefoodsecret
+
+EMAIL_USER=example@gmail.com
+EMAIL_PASS=your_app_password
+
+TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxx
+TWILIO_AUTH_TOKEN=xxxxxxxxxxxxxxxxxxxx
+TWILIO_WHATSAPP_NUMBER=whatsapp:+14155238886
 ```
 
 ---
@@ -537,8 +557,73 @@ JWT_SECRET=mySecretKey123
 | Variable | Description | Example |
 |----------|-------------|----------|
 | PORT | Port number on which the server runs | 5000 |
-| MONGO_URI | MongoDB connection string | mongodb://127.0.0.1:27017/homemade_food_delivery |
-| JWT_SECRET | Secret key used for JWT token generation | mySecretKey123 |
+| MONGO_URI | MongoDB Atlas connection string used to connect to the cloud database | mongodb+srv://username:password@cluster.mongodb.net/HomemadeFoodDB |
+| JWT_SECRET | Secret key used for JWT token generation and verification | homemadefoodsecret |
+| EMAIL_USER | Gmail account used to send automated emails | example@gmail.com |
+| EMAIL_PASS | Gmail App Password used by Nodemailer | xxxxxxxx |
+| TWILIO_ACCOUNT_SID | Twilio Account SID for WhatsApp integration | ACxxxxxxxx |
+| TWILIO_AUTH_TOKEN | Twilio Authentication Token | xxxxxxxxx |
+| TWILIO_WHATSAPP_NUMBER | Twilio Sandbox WhatsApp number | whatsapp:+14155238886 |
+
+---
+
+# 📧 Email Notification
+
+The application uses **Nodemailer** to automatically send a welcome email after successful user registration.
+
+**Workflow:**
+
+```text
+User Registration
+       ↓
+User Data Saved in MongoDB
+       ↓
+Welcome Email Sent Automatically
+```
+
+**Technologies Used:**
+- Node.js
+- Express.js
+- Nodemailer
+- Gmail App Password
+
+---
+
+# 💬 WhatsApp Notification
+
+The application uses **Twilio WhatsApp Sandbox API** to automatically send a welcome WhatsApp message after successful user registration.
+
+**Workflow:**
+
+```text
+User Registration
+       ↓
+User Data Saved in MongoDB
+       ↓
+Welcome WhatsApp Message Sent Automatically
+```
+
+**Technologies Used:**
+- Node.js
+- Express.js
+- Twilio WhatsApp Sandbox API
+
+**Note:**
+- Twilio Sandbox is used only for testing purposes.
+- During testing, only the mobile numbers that join the Twilio Sandbox can receive WhatsApp messages.
+- To send WhatsApp messages to all users in production, a **Twilio Paid Account**, **WhatsApp Business API approval**, and a **verified business number** are required.
+
+---
+
+# 🔒 Security Note
+
+- Never upload the `.env` file to GitHub.
+- Add `.env` to `.gitignore`.
+- Do not expose passwords, tokens, or API keys publicly.
+
+```gitignore
+.env
+```
 
 ---
 
