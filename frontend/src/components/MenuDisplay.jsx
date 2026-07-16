@@ -16,7 +16,7 @@ function MenuDisplay() {
       })
       .catch((err) => {
         console.error(err)
-        setError('Menu load avvaledu. Backend running unda check cheyandi.')
+        setError('Failed to load menu. Please check if the backend server is running.')
         setLoading(false)
       })
   }, [])
