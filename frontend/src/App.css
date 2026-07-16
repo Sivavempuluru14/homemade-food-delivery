@@ -31,7 +31,8 @@ body {
 
 .main-nav {
   display: flex;
-  justify-content: center;
+  align-items: center;
+  justify-content: space-between;
   flex-wrap: wrap;
   gap: 10px;
   padding: 12px 16px;
@@ -40,6 +41,27 @@ body {
   position: sticky;
   top: 0;
   z-index: 20;
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  color: #6d2f00;
+  font-size: 1.05rem;
+}
+
+.brand-icon {
+  font-size: 1.2rem;
+}
+
+.nav-links {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  flex: 1;
 }
 
 .nav-btn {
@@ -72,6 +94,120 @@ body {
 
 .btn-delivery {
   background-color: #7b1fa2;
+}
+
+.hamburger-wrapper {
+  position: relative;
+}
+
+.hamburger-button {
+  border: none;
+  border-radius: 999px;
+  background: #6d2f00;
+  color: white;
+  font-size: 1.15rem;
+  width: 42px;
+  height: 42px;
+  cursor: pointer;
+}
+
+.hamburger-menu {
+  position: absolute;
+  right: 0;
+  top: 50px;
+  background: white;
+  border: 1px solid #e7d9c3;
+  border-radius: 12px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+  min-width: 180px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.menu-option-btn,
+.submenu-btn,
+.form-actions button {
+  border: none;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #fff3e0;
+  color: #6d2f00;
+  cursor: pointer;
+  font-weight: 600;
+  text-align: left;
+}
+
+.submenu {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 4px;
+}
+
+.menu-admin-panel {
+  margin-bottom: 20px;
+  background: white;
+  border: 1px solid #e7d9c3;
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
+}
+
+.menu-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.menu-form h3 {
+  margin: 0 0 4px;
+  color: #6d2f00;
+}
+
+.menu-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 600;
+  color: #6d2f00;
+}
+
+.menu-form input,
+.menu-form select,
+.menu-form textarea {
+  border: 1px solid #d8c1a4;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font: inherit;
+}
+
+.form-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.form-actions button {
+  background: #6d2f00;
+  color: white;
+}
+
+.secondary-btn {
+  background: #d8c1a4 !important;
+  color: #6d2f00 !important;
+}
+
+.success-message {
+  color: #1b6e29;
+  font-weight: 600;
+}
+
+.error-message {
+  color: #b91c1c;
+  font-weight: 600;
 }
 
 .home {
@@ -132,6 +268,11 @@ body {
   .main-nav {
     gap: 8px;
     padding: 10px 12px;
+  }
+
+  .nav-links {
+    width: 100%;
+    order: 3;
   }
 
   .nav-btn {
