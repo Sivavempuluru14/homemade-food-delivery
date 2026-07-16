@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
+import { FaArrowRight } from "react-icons/fa";
 
-function MenuDisplay() {
+function MenuDisplay({ onViewPlans }) {
   const [selectedItem, setSelectedItem] = useState(null)
   const [menuItems, setMenuItems] = useState([])
   const [loading, setLoading] = useState(true)
@@ -16,7 +17,7 @@ function MenuDisplay() {
       })
       .catch((err) => {
         console.error(err)
-        setError('Menu load avvaledu. Backend running unda check cheyandi.')
+        setError('Failed to load menu. please check if the backend server is running.')
         setLoading(false)
       })
   }, [])
@@ -89,6 +90,9 @@ function MenuDisplay() {
           </div>
         </div>
       )}
+      <button className="circle-arrow" onClick={onViewPlans}>
+  <FaArrowRight />
+</button>
     </section>
   )
 }

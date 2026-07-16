@@ -1,58 +1,46 @@
-import { useState } from 'react'
-import axios from 'axios'
+import { useNavigate } from "react-router-dom";
 
 const plans = [
   {
-    name: 'Veg Plan',
-    type: 'Veg',
+    name: "Veg Plan",
+    type: "Veg",
     price: 6500,
-    features: ['Breakfast, Lunch & Dinner daily', 'Vegetarian South Indian menu'],
+    features: [
+      "Breakfast, Lunch & Dinner daily",
+      "Vegetarian South Indian menu",
+    ],
   },
   {
-    name: 'Non-Veg Plan',
-    type: 'Non-Veg',
+    name: "Non-Veg Plan",
+    type: "Non-Veg",
     price: 7500,
-    features: ['Breakfast, Lunch & Dinner daily', 'Non-Veg dish included daily'],
+    features: [
+      "Breakfast, Lunch & Dinner daily",
+      "Non-Veg dish included daily",
+    ],
   },
-]
+];
 
 function SubscriptionPlans() {
-  const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState('')
+  const navigate = useNavigate();
 
-  const handleSubscribe = async (plan) => {
-    // userId will be set by the login flow (Member 3's work)
-    // Check with them for the exact localStorage key name used after login
-    const userId = localStorage.getItem('userId')
+  const handleSubscribe = (plan) => {
+    const selectedPlan = {
+      planType: plan.type,
+      amount: plan.price,
+      lunchBoxCharge: 1000,
+      totalAmount: plan.price + 1000,
+    };
 
-    if (!userId) {
-      setMessage('Please log in first to subscribe to a plan.')
-      return
-    }
+    // Save selected plan
+    localStorage.setItem(
+      "selectedPlan",
+      JSON.stringify(selectedPlan)
+    );
 
-    const lunchBoxCharge = 1000
-    const totalAmount = plan.price + lunchBoxCharge
-
-    setLoading(true)
-    setMessage('')
-
-    try {
-      const res = await axios.post('http://localhost:5000/api/subscriptions', {
-        userId: userId,
-        planType: plan.type,
-        amount: plan.price,
-        lunchBoxCharge: lunchBoxCharge,
-        totalAmount: totalAmount,
-      })
-      console.log('Subscription created:', res.data)
-      setMessage(`Subscribed to ${plan.name} successfully! Total: ₹${totalAmount}`)
-    } catch (err) {
-      console.error(err.response?.data || err.message)
-      setMessage('Subscription failed. Please try again.')
-    }
-
-    setLoading(false)
-  }
+    // Go to Register page
+    navigate("/register");
+  };
 
   return (
     <section className="plans">
@@ -60,28 +48,31 @@ function SubscriptionPlans() {
 
       <div className="plan-cards">
         {plans.map((plan) => (
-          <div key={plan.name} className="plan-card">
+          <div key={plan.type} className="plan-card">
             <h3>{plan.name}</h3>
-            <p className="price">₹{plan.price} / month</p>
+
+            <p className="price">
+              ₹{plan.price} / month
+            </p>
+
             <ul>
-              {plan.features.map((f) => (
-                <li key={f}>{f}</li>
+              {plan.features.map((feature) => (
+                <li key={feature}>{feature}</li>
               ))}
             </ul>
-            <button onClick={() => handleSubscribe(plan)} disabled={loading}>
-              {loading ? 'Processing...' : `Choose ${plan.name}`}
+
+            <button onClick={() => handleSubscribe(plan)}>
+              Choose {plan.name}
             </button>
           </div>
         ))}
       </div>
 
       <p className="addon-note">
-        + ₹1000 one-time charge in the first month for personal lunchbox setup
+        + ₹1000 one-time charge in the first month for personal lunchbox setup.
       </p>
-
-      {message && <p className="subscription-message">{message}</p>}
     </section>
-  )
+  );
 }
 
-export default SubscriptionPlans
+export default SubscriptionPlans;
