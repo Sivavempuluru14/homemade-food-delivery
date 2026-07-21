@@ -1,0 +1,100 @@
+import { useState } from "react";
+import { FaArrowRight } from "react-icons/fa";
+
+function MenuDisplay({ menuItems, loading, error, onViewPlans }) {
+  const [selectedItem, setSelectedItem] = useState(null);
+
+  if (loading) return <p>Loading menu...</p>;
+  if (error) return <p>{error}</p>;
+  if (menuItems.length === 0) return <p>No menu items found.</p>;
+
+  const groupedMenu = menuItems.reduce((acc, item) => {
+    if (!acc[item.category]) acc[item.category] = [];
+    acc[item.category].push(item);
+    return acc;
+  }, {});
+
+  // Fixed category order
+  const categoryOrder = ["Breakfast", "Lunch", "Dinner"];
+
+  return (
+    <section className="menu">
+      <h2>Today's Menu</h2>
+
+      {categoryOrder.map(
+        (mealTime) =>
+          groupedMenu[mealTime] && (
+            <div key={mealTime} className="meal-group">
+              <h3>{mealTime}</h3>
+
+              <div className="meal-items">
+                {groupedMenu[mealTime].map((item) => (
+                  <article key={item._id} className="meal-card">
+                    <button
+                      type="button"
+                      className="meal-image-button"
+                      onClick={() => setSelectedItem(item)}
+                      aria-label={`View ${item.foodName}`}
+                    >
+                      <img
+                        src={
+                          item.image ||
+                          "https://via.placeholder.com/300x200?text=No+Image"
+                        }
+                        alt={item.foodName}
+                        className="meal-image"
+                      />
+                    </button>
+
+                    <div className="meal-content">
+                      <h4>{item.foodName}</h4>
+                      <p>{item.description}</p>
+                      <span>₹{item.price}</span>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          )
+      )}
+
+      {selectedItem && (
+        <div
+          className="image-modal"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setSelectedItem(null)}
+        >
+          <div
+            className="image-modal-content"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="modal-close"
+              onClick={() => setSelectedItem(null)}
+              aria-label="Close image"
+            >
+              ×
+            </button>
+
+            <img
+              src={
+                selectedItem.image ||
+                "https://via.placeholder.com/400x300?text=No+Image"
+              }
+              alt={selectedItem.foodName}
+              className="modal-image"
+            />
+          </div>
+        </div>
+      )}
+
+      <button className="circle-arrow" onClick={onViewPlans}>
+        <FaArrowRight />
+      </button>
+    </section>
+  );
+}
+
+export default MenuDisplay;
