@@ -60,23 +60,42 @@ function MainLayout() {
   };
 
   const fetchMenuItems = async () => {
-    try {
-      setMenuLoading(true);
-      const response = await axios.get("http://localhost:5000/api/menu");
-      setMenuItems(response.data);
-      setMenuError("");
-    } catch (error) {
-      console.error(error);
-      setMenuError("Menu could not be loaded. Please confirm the backend is running.");
-    } finally {
-      setMenuLoading(false);
-    }
-  };
+  try {
+    setMenuLoading(true);
+
+    const token = localStorage.getItem("token");
+
+    const response = await axios.get(
+      "http://localhost:5000/api/menu",
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    setMenuItems(response.data);
+    setMenuError("");
+
+  } catch (error) {
+    console.error(
+      "Menu Fetch Error:",
+      error.response?.data || error.message
+    );
+
+    setMenuError("Menu could not be loaded.");
+  } finally {
+    setMenuLoading(false);
+  }
+};
 
   useEffect(() => {
-    fetchMenuItems();
-  }, []);
 
+  if(localStorage.getItem("token")){
+    fetchMenuItems();
+  }
+
+}, []);
   const closeMenus = () => {
     setShowMenuDropdown(false);
     setShowSettingsMenu(false);
@@ -107,25 +126,56 @@ function MainLayout() {
   };
 
   const handleAddItem = async (event) => {
-    event.preventDefault();
+  event.preventDefault();
 
-    try {
-      const payload = {
-        ...formData,
-        price: Number(formData.price),
-      };
+  try {
 
-      const response = await axios.post("http://localhost:5000/api/menu", payload);
-      setMenuItems((previous) => [response.data.menu, ...previous]);
-      setFeedbackMessage("Item added successfully.");
-      setMenuAction(null);
-      setPage("menu");
-      resetForm();
-    } catch (error) {
-      console.error(error);
-      setFeedbackMessage("Unable to add the item right now.");
-    }
-  };
+    const token = localStorage.getItem("token");
+
+    const payload = {
+      ...formData,
+      price: Number(formData.price),
+    };
+
+
+    const response = await axios.post(
+      "http://localhost:5000/api/menu",
+      payload,
+      {
+        headers:{
+          Authorization:`Bearer ${token}`
+        }
+      }
+    );
+
+
+    setMenuItems((previous)=>[
+      response.data.menu || response.data,
+      ...previous
+    ]);
+
+
+    setFeedbackMessage("Item added successfully.");
+
+    setMenuAction(null);
+
+    setPage("menu");
+
+    resetForm();
+
+
+  } catch(error){
+
+    console.error(
+      "Add Menu Error:",
+      error.response?.data || error.message
+    );
+
+    setFeedbackMessage(
+      "Unable to add the item right now."
+    );
+  }
+};
 
   const handleSelectItemForEdit = (event) => {
     const itemId = event.target.value;
@@ -144,55 +194,184 @@ function MainLayout() {
   };
 
   const handleEditItem = async (event) => {
-    event.preventDefault();
 
-    if (!selectedItemId) {
-      setFeedbackMessage("Choose an item before saving changes.");
-      return;
-    }
+  event.preventDefault();
 
-    try {
-      const payload = {
-        ...formData,
-        price: Number(formData.price),
-      };
 
-      const response = await axios.put(
-        `http://localhost:5000/api/menu/${selectedItemId}`,
-        payload
-      );
+  if(!selectedItemId){
 
-      setMenuItems((previous) =>
-        previous.map((item) => (item._id === selectedItemId ? response.data.menu : item))
-      );
-      setFeedbackMessage("Item updated successfully.");
-      setMenuAction(null);
-      setPage("menu");
-      resetForm();
-    } catch (error) {
-      console.error(error);
-      setFeedbackMessage("Unable to update the selected item.");
-    }
-  };
+    setFeedbackMessage(
+      "Choose an item before saving changes."
+    );
 
-  const handleDeleteItem = async () => {
-    if (!selectedItemId) {
-      setFeedbackMessage("Choose an item before deleting it.");
-      return;
-    }
+    return;
+  }
 
-    try {
-      await axios.delete(`http://localhost:5000/api/menu/${selectedItemId}`);
-      setMenuItems((previous) => previous.filter((item) => item._id !== selectedItemId));
-      setFeedbackMessage("Item deleted successfully.");
-      setMenuAction(null);
-      setPage("menu");
-      resetForm();
-    } catch (error) {
-      console.error(error);
-      setFeedbackMessage("Unable to delete the selected item.");
-    }
-  };
+
+  try{
+
+    const token = localStorage.getItem("token");
+
+
+    const payload = {
+      ...formData,
+      price:Number(formData.price)
+    };
+
+
+    const response = await axios.put(
+
+      `http://localhost:5000/api/menu/${selectedItemId}`,
+
+      payload,
+
+      {
+        headers:{
+          Authorization:`Bearer ${token}`
+        }
+      }
+
+    );
+
+
+
+    const updatedItem =
+      response.data.menu || response.data;
+
+
+
+    setMenuItems((previous)=>
+
+      previous.map((item)=>
+
+        item._id === selectedItemId
+
+        ? updatedItem
+
+        : item
+
+      )
+
+    );
+
+
+    setFeedbackMessage(
+      "Item updated successfully."
+    );
+
+
+    setMenuAction(null);
+
+    setPage("menu");
+
+    resetForm();
+
+
+  }catch(error){
+
+
+    console.error(
+      "Edit Menu Error:",
+      error.response?.data || error.message
+    );
+
+
+    setFeedbackMessage(
+      "Unable to update the selected item."
+    );
+
+  }
+
+};
+
+  const handleDeleteItem = async()=>{
+
+
+if(!selectedItemId){
+
+setFeedbackMessage(
+"Choose an item before deleting it."
+);
+
+return;
+
+}
+
+
+
+try{
+
+
+const token = localStorage.getItem("token");
+
+
+await axios.delete(
+
+`http://localhost:5000/api/menu/${selectedItemId}`,
+
+{
+
+headers:{
+
+Authorization:`Bearer ${token}`
+
+}
+
+}
+
+);
+
+
+
+setMenuItems((previous)=>
+
+previous.filter(
+
+(item)=>item._id !== selectedItemId
+
+)
+
+);
+
+
+
+setFeedbackMessage(
+"Item deleted successfully."
+);
+
+
+
+setMenuAction(null);
+
+setPage("menu");
+
+resetForm();
+
+
+
+}catch(error){
+
+
+console.error(
+
+"Delete Menu Error:",
+
+error.response?.data || error.message
+
+);
+
+
+setFeedbackMessage(
+
+"Unable to delete the selected item."
+
+);
+
+
+}
+
+
+};
 
   return (
     <div className="app-shell">
