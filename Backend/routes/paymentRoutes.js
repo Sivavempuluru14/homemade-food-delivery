@@ -7,8 +7,17 @@ const {
   getPaymentById,
 } = require("../controllers/paymentController");
 
-router.post("/", createPayment);
-router.get("/history", getPayments);
-router.get("/:id", getPaymentById);
+const { protect } = require("../middleware/authMiddleware");
+
+// Create Payment (Logged-in User)
+router.post("/", protect, createPayment);
+
+// Get Payment History
+// Admin -> All Transactions
+// User -> Own Transactions Only
+router.get("/history", protect, getPayments);
+
+// Get Payment By ID
+router.get("/:id", protect, getPaymentById);
 
 module.exports = router;

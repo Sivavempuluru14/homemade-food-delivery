@@ -55,10 +55,6 @@ return (
         <p>{user.location}</p>
       </div>
 
-     <button className="payment-btn" onClick={() => navigate("/order-summary")}>
-    Proceed to Payment
-     </button>
-
       <button
         className="logout-btn"
         onClick={handleLogout}

@@ -269,10 +269,15 @@ const loginUser = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+  {
+    id: user._id,
+    role: user.role,
+  },
+  process.env.JWT_SECRET,
+  {
+    expiresIn: "7d",
+  }
+);
 
     const {
       password: pwd,
@@ -293,6 +298,128 @@ const loginUser = async (req, res) => {
   }
 };
 
+// ================= USER LOGIN =================
+
+const userLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({
+        message: "User not found",
+      });
+    }
+
+    const isMatch = await bcrypt.compare(
+      password,
+      user.password
+    );
+
+    if (!isMatch) {
+      return res.status(400).json({
+        message: "Invalid Password",
+      });
+    }
+
+    // Only User Login
+    if (user.role !== "user") {
+      return res.status(403).json({
+        message: "User Login Only",
+      });
+    }
+
+    const token = jwt.sign(
+      {
+        id: user._id,
+        role: user.role,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "7d",
+      }
+    );
+
+    const {
+      password: pwd,
+      ...userData
+    } = user._doc;
+
+    res.status(200).json({
+      message: "User Login Successful",
+      token,
+      user: userData,
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+
+// ================= ADMIN LOGIN =================
+
+const adminLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({
+        message: "Admin not found",
+      });
+    }
+
+    const isMatch = await bcrypt.compare(
+      password,
+      user.password
+    );
+
+    if (!isMatch) {
+      return res.status(400).json({
+        message: "Invalid Password",
+      });
+    }
+
+    // Only Admin Login
+    if (user.role !== "admin") {
+      return res.status(403).json({
+        message: "Admin Login Only",
+      });
+    }
+
+    const token = jwt.sign(
+      {
+        id: user._id,
+        role: user.role,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "7d",
+      }
+    );
+
+    const {
+      password: pwd,
+      ...userData
+    } = user._doc;
+
+    res.status(200).json({
+      message: "Admin Login Successful",
+      token,
+      user: userData,
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
 // ================= PROFILE =================
 
 const getProfile = async (
@@ -316,5 +443,7 @@ module.exports = {
   verifyOtp,
   registerUser,
   loginUser,
+  userLogin,
+  adminLogin,
   getProfile,
 };

@@ -4,6 +4,7 @@ import {
   BrowserRouter,
   Routes,
   Route,
+  Link,
   useNavigate,
 } from "react-router-dom";
 import { FaBars, FaHotel, FaTimes } from "react-icons/fa";
@@ -14,10 +15,17 @@ import SubscriptionPlans from "./components/SubscriptionPlans";
 import DeliveryOptions from "./components/DeliveryOptions";
 
 import Register from "./pages/Register";
-import Login from "./pages/Login";
+import Login from "./pages/Login/Login";
+import UserLogin from "./pages/Login/UserLogin";
+import AdminLogin from "./pages/Login/AdminLogin";
 import Profile from "./pages/Profile";
 
-
+import OrderSummary from "./pages/OrderSummary";
+import Payment from "./pages/Payment";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import Confirmation from "./pages/Confirmation";
+import PaymentHistory from "./pages/PaymentHistory";
+import PaymentDetails from "./pages/PaymentDetails";
 import VerifyOtp from "./pages/VerifyOtp";
 
 const initialFormState = {
@@ -39,7 +47,12 @@ function MainLayout() {
   const [formData, setFormData] = useState(initialFormState);
   const [selectedItemId, setSelectedItemId] = useState("");
   const [feedbackMessage, setFeedbackMessage] = useState("");
+    // ADD THESE 3 LINES
+  const token = localStorage.getItem("token");
+  const role = localStorage.getItem("role");
+  const isLoggedIn = !!token;
   const navigate = useNavigate();
+
 
   const resetForm = () => {
     setFormData(initialFormState);
@@ -64,17 +77,26 @@ function MainLayout() {
     fetchMenuItems();
   }, []);
 
-  const navigateToPage = (nextPage, path = "/") => {
-    navigate(path);
-    setPage(nextPage);
+  const closeMenus = () => {
     setShowMenuDropdown(false);
     setShowSettingsMenu(false);
   };
 
+  const navigateToPage = (nextPage, path = "/") => {
+    navigate(path);
+    setPage(nextPage);
+    closeMenus();
+  };
+
+  const goHome = () => {
+    setPage("home");
+    navigate("/");
+    closeMenus();
+  };
+
   const openMenuAction = (action) => {
     setMenuAction(action);
-    setShowMenuDropdown(false);
-    setShowSettingsMenu(false);
+    closeMenus();
     setFeedbackMessage("");
     resetForm();
   };
@@ -183,57 +205,25 @@ function MainLayout() {
         </div>
 
         <div className="nav-buttons-row">
-          <button
-            className="nav-btn btn-home"
-            onClick={() => {
-              navigate("/");
-              setPage("home");
-            }}
-          >
+          <Link className="top-nav-link btn-home" to="/" onClick={() => navigateToPage("home", "/")}>
             Home
-          </button>
+          </Link>
 
-          <button
-            className="nav-btn btn-menu"
-            onClick={() => {
-              navigate("/");
-              setPage("menu");
-            }}
-          >
-            Explore Menu
-          </button>
+          <Link className="top-nav-link btn-menu" to="/" onClick={() => navigateToPage("menu", "/")}>
+            Menu
+          </Link>
 
-          <button
-            className="nav-btn btn-plan"
-            onClick={() => {
-              navigate("/");
-              setPage("plans");
-            }}
-          >
-            View Plans
-          </button>
+          <Link className="top-nav-link btn-plan" to="/" onClick={() => navigateToPage("plans", "/")}>
+            Plans
+          </Link>
 
-          <button
-            className="nav-btn btn-delivery"
-            onClick={() => {
-              navigate("/");
-              setPage("delivery");
-            }}
-          >
-            Delivery Options
-          </button>
-
-          <button className="nav-btn btn-register" onClick={() => navigate("/register")}>
+          <Link className="top-nav-link btn-register" to="/register" onClick={() => navigateToPage("register", "/register")}>
             Register
-          </button>
+          </Link>
 
-          <button className="nav-btn btn-login" onClick={() => navigate("/login")}>
-            Login
-          </button>
-
-          <button className="nav-btn btn-profile" onClick={() => navigate("/profile")}>
-            Profile
-          </button>
+         <Link to="/login" className="top-nav-link btn-login">
+          Login
+        </Link>
         </div>
 
         <div className="nav-actions">
@@ -248,25 +238,100 @@ function MainLayout() {
 
           {showMenuDropdown && (
             <div className="dropdown-menu">
-              <button
-                type="button"
-                className="dropdown-item"
-                onClick={() => setShowSettingsMenu((previous) => !previous)}
-              >
-                Edit Menu
-              </button>
+              <Link className="dropdown-link" to="/" onClick={() => navigateToPage("home", "/")}>
+                Home
+              </Link>
+              <Link className="dropdown-link" to="/" onClick={() => navigateToPage("menu", "/")}>
+                Menu
+              </Link>
+              <Link className="dropdown-link" to="/" onClick={() => navigateToPage("plans", "/")}>
+                Plans
+              </Link>
+              <Link className="dropdown-link" to="/" onClick={() => navigateToPage("delivery", "/")}>
+                Delivery Options
+              </Link>
+              <Link
+                  className="dropdown-link"
+                  to="/register"
+                  onClick={() => navigateToPage("register", "/register")}
+                >
+                  Register
+                </Link>
 
-              {showSettingsMenu && (
+                <Link
+                  className="dropdown-link"
+                  to="/login"
+                  onClick={() => navigateToPage("login", "/login")}
+                >
+                  Login
+                </Link>
+
+                {isLoggedIn && (
+                <>
+                  <Link
+                    className="dropdown-link"
+                    to="/profile"
+                    onClick={() => navigateToPage("profile", "/profile")}
+                  >
+                    Profile
+                  </Link>
+
+                  <Link
+                      className="dropdown-link dropdown-link-payment"
+                      to="/payment-history"
+                      onClick={() =>
+                        navigateToPage("payment-history", "/payment-history")
+                      }
+                    >
+                      Payment History
+                    </Link>
+                  </>
+                )}
+                {isLoggedIn && role === "admin" && (
+                <a
+                  className="dropdown-link"
+                  href="#edit-menu"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowSettingsMenu((prev) => !prev);
+                  }}
+                >
+                  Edit Menu
+                </a>
+              )}
+
+              {role === "admin" && showSettingsMenu && (
                 <div className="submenu">
-                  <button type="button" className="dropdown-item" onClick={() => openMenuAction("add")}>
-                    Add Items
-                  </button>
-                  <button type="button" className="dropdown-item" onClick={() => openMenuAction("edit")}>
-                    Edit Items
-                  </button>
-                  <button type="button" className="dropdown-item" onClick={() => openMenuAction("delete")}>
-                    Delete Items
-                  </button>
+                  <a
+                    className="dropdown-link dropdown-link-sub"
+                    href="#add-menu"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      openMenuAction("add");
+                    }}
+                  >
+                    Add Menu
+                  </a>
+                  <a
+                    className="dropdown-link dropdown-link-sub"
+                    href="#edit-items"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      openMenuAction("edit");
+                    }}
+                  >
+                    Edit Menu
+                  </a>
+                  <a
+                    className="dropdown-link dropdown-link-sub"
+                    href="#delete-menu"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      openMenuAction("delete");
+                    }}
+                  >
+                    Delete Menu
+                  </a>
                 </div>
               )}
             </div>
@@ -275,7 +340,7 @@ function MainLayout() {
       </header>
 
       <main className="page-body">
-        {menuAction && (
+        {role === "admin" && menuAction && (
           <section className="menu-admin-panel">
             <div className="menu-admin-card">
               <div className="menu-admin-header">
@@ -436,7 +501,15 @@ function MainLayout() {
           <Route path="/register" element={<Register />} />
           <Route path="/verify-otp" element={<VerifyOtp />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/profile" element={<Profile />} />     
+          <Route path="/login/user" element={<UserLogin />} />
+          <Route path="/login/admin" element={<AdminLogin />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/order-summary" element={<OrderSummary />} />
+          <Route path="/payment" element={<Payment />} />
+          <Route path="/payment-success" element={<PaymentSuccess />} />
+          <Route path="/confirmation" element={<Confirmation />} />
+          <Route path="/payment-history" element={<PaymentHistory />} />
+          <Route path="/payment-details" element={<PaymentDetails onGoHome={goHome} />} />
         </Routes>
       </main>
 

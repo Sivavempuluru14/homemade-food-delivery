@@ -90,7 +90,11 @@ useEffect(() => {
   return (
     <div className="auth-container">
       <div className="auth-card">
-        <h2>Register</h2>
+        <div className="auth-header">
+          <span className="auth-badge">Join us</span>
+          <h2>Register</h2>
+          <p className="auth-intro">Create your account to choose a plan and get fresh meals at your doorstep.</p>
+        </div>
 
         <form onSubmit={register}>
           {/* Full Name */}

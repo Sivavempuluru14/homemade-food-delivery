@@ -4,7 +4,7 @@
 
 ```http
 http://localhost:5000
-````
+```
 
 ---
 
@@ -16,8 +16,111 @@ Authentication module handles:
 * Email OTP Verification
 * WhatsApp OTP Verification
 * User Login
+* Admin Login
 * JWT Authentication
 * User Profile Access
+* Role Based Authentication (Admin/User)
+
+---
+
+# Authentication Flow
+
+```text
+User enters Full Name, Email, Mobile, Password and Location
+
+                ↓
+
+        Send OTP API
+
+                ↓
+
+ Email OTP Sent Successfully
+                +
+ WhatsApp OTP Sent Successfully
+
+                ↓
+
+      Verify OTP API
+
+                ↓
+
+Email Verified
++
+WhatsApp Verified
+
+                ↓
+
+      Register User API
+
+                ↓
+
+Password Encrypted using bcrypt
+
+                ↓
+
+User Saved in MongoDB
+
+                ↓
+
+Welcome Email Sent
+
+                ↓
+
+Welcome WhatsApp Message Sent
+
+                ↓
+
+User Login / Admin Login
+
+                ↓
+
+JWT Token Generated
+
+                ↓
+
+Role Stored Inside JWT
+
+                ↓
+
+Protected APIs Access
+```
+
+---
+
+# User Roles
+
+The application supports two different roles.
+
+| Role | Description |
+|--------|------------|
+| user | Normal customer who can register, login, subscribe and make payments |
+| admin | Administrator who manages menu items and views all transactions |
+
+---
+
+# JWT Payload
+
+Every successful login generates a JWT Token.
+
+Example Payload
+
+```json
+{
+    "id":"USER_ID",
+    "role":"admin"
+}
+```
+
+or
+
+```json
+{
+    "id":"USER_ID",
+    "role":"user"
+}
+```
+
+The role is later used by the backend middleware to authorize APIs.
 
 ---
 
@@ -39,12 +142,12 @@ POST
 
 ## Description
 
-This API sends:
+This API generates two different OTPs.
 
-* Email OTP through Nodemailer
-* WhatsApp OTP through whatsapp-web.js
+- Email OTP → Sent using Nodemailer
+- WhatsApp OTP → Sent using whatsapp-web.js
 
-before user registration.
+Both OTPs must be verified before registration.
 
 ---
 
@@ -69,9 +172,7 @@ before user registration.
 
 ---
 
-## OTP Database Structure
-
-After sending OTP:
+## OTP Collection (MongoDB)
 
 ```json
 {
@@ -79,7 +180,18 @@ After sending OTP:
   "mobile": "9876543210",
   "emailOtp": "483921",
   "whatsappOtp": "716504",
-  "verified": false
+  "verified": false,
+  "expireAt": "2026-07-20T10:30:00.000Z"
+}
+```
+
+---
+
+## Error Response
+
+```json
+{
+  "message": "Failed to Send OTP"
 }
 ```
 
@@ -103,12 +215,12 @@ POST
 
 ## Description
 
-This API verifies:
+This API verifies both OTPs.
 
-* Email OTP
-* WhatsApp OTP
+Registration will be allowed only if:
 
-Only after successful verification user can register.
+- Email OTP is correct
+- WhatsApp OTP is correct
 
 ---
 
@@ -135,12 +247,12 @@ Only after successful verification user can register.
 
 ---
 
-## OTP Status After Verification
-
-Database will update:
+## Database After Verification
 
 ```json
 {
+  "email": "siva@gmail.com",
+  "mobile": "9876543210",
   "verified": true
 }
 ```
@@ -169,7 +281,7 @@ Database will update:
 
 ---
 
-### Expired OTP
+### OTP Expired
 
 ```json
 {
@@ -197,14 +309,25 @@ POST
 
 ## Description
 
-Creates a new user account.
+Registers a new user after successful OTP verification.
 
-Before registration backend checks:
+Before creating the account, backend checks:
 
-* Email OTP verification
-* WhatsApp OTP verification
+- Email OTP Verified
+- WhatsApp OTP Verified
 
-If OTP is not verified, account creation is blocked.
+Password is encrypted using bcrypt before storing into MongoDB.
+
+After successful registration:
+
+- Welcome Email is sent
+- Welcome WhatsApp Message is sent
+
+New users are automatically assigned the role:
+
+```text
+role = user
+```
 
 ---
 
@@ -216,33 +339,7 @@ If OTP is not verified, account creation is blocked.
   "email": "siva@gmail.com",
   "mobile": "9876543210",
   "password": "Password@123",
-  "location": "Guindy"
-}
-```
-
----
-
-## OTP Security Validation
-
-Backend checks:
-
-```json
-{
-  "email": "siva@gmail.com",
-  "mobile": "9876543210",
-  "verified": true
-}
-```
-
----
-
-## If OTP Not Verified
-
-Response:
-
-```json
-{
-  "message": "Please verify OTP first"
+  "location": "Guindy Railway Station"
 }
 ```
 
@@ -258,18 +355,20 @@ Response:
     "fullName": "Siva",
     "email": "siva@gmail.com",
     "mobile": "9876543210",
-    "location": "Guindy",
+    "location": "Guindy Railway Station",
+    "role": "user",
     "emailVerified": true,
-    "mobileVerified": true
+    "mobileVerified": true,
+    "createdAt": "2026-07-20T07:00:00.000Z"
   }
 }
 ```
 
 ---
 
-## Error Response
+## Error Responses
 
-### Existing User
+### User Already Exists
 
 ```json
 {
@@ -279,7 +378,17 @@ Response:
 
 ---
 
-# 4. Login User API
+### OTP Not Verified
+
+```json
+{
+  "message": "Please verify OTP first"
+}
+```
+
+---
+
+# 4. User Login API
 
 ## Method
 
@@ -297,7 +406,21 @@ POST
 
 ## Description
 
-Authenticates registered users and generates JWT token.
+Authenticates registered users.
+
+After successful authentication:
+
+- Password is verified using bcrypt.
+- JWT Token is generated.
+- User role (Admin/User) is included in JWT payload.
+
+Only users having
+
+```text
+role = user
+```
+
+can login through this API.
 
 ---
 
@@ -323,8 +446,22 @@ Authenticates registered users and generates JWT token.
     "fullName": "Siva",
     "email": "siva@gmail.com",
     "mobile": "9876543210",
-    "location": "Guindy"
+    "location": "Guindy Railway Station",
+    "role": "user",
+    "emailVerified": true,
+    "mobileVerified": true
   }
+}
+```
+
+---
+
+## JWT Payload
+
+```json
+{
+  "id": "user_id",
+  "role": "user"
 }
 ```
 
@@ -340,7 +477,83 @@ Authenticates registered users and generates JWT token.
 }
 ```
 
+### Invalid Password
+
+```json
+{
+  "message": "Invalid Password"
+}
+```
+
 ---
+
+# 5. Admin Login API (NEW)
+
+## Method
+
+```http
+POST
+```
+
+## Endpoint
+
+```http
+/api/auth/admin/login
+```
+
+---
+
+## Description
+
+Authenticates only Admin users.
+
+Before login, backend verifies:
+
+- Email exists
+- Password is correct
+- User role is **admin**
+
+If role is **user**, login will be denied.
+
+---
+
+## Request Body
+
+```json
+{
+  "email": "admin@gmail.com",
+  "password": "Admin@123"
+}
+```
+
+---
+
+## Success Response
+
+```json
+{
+  "message": "Admin Login Successful",
+  "token": "JWT_TOKEN",
+  "user": {
+    "_id": "admin_id",
+    "fullName": "Administrator",
+    "email": "admin@gmail.com",
+    "role": "admin"
+  }
+}
+```
+
+---
+
+## Error Responses
+
+### Unauthorized
+
+```json
+{
+  "message": "Access Denied. Admin Only."
+}
+```
 
 ### Invalid Password
 
@@ -352,7 +565,7 @@ Authenticates registered users and generates JWT token.
 
 ---
 
-# 5. Get User Profile API
+# 6. Get User Profile API
 
 ## Method
 
@@ -376,6 +589,14 @@ Authorization: Bearer JWT_TOKEN
 
 ---
 
+## Description
+
+Returns logged-in user details.
+
+This API is protected using JWT Authentication middleware.
+
+---
+
 ## Success Response
 
 ```json
@@ -384,7 +605,10 @@ Authorization: Bearer JWT_TOKEN
   "fullName": "Siva",
   "email": "siva@gmail.com",
   "mobile": "9876543210",
-  "location": "Guindy"
+  "location": "Guindy Railway Station",
+  "role": "admin",
+  "emailVerified": true,
+  "mobileVerified": true
 }
 ```
 
@@ -400,58 +624,131 @@ Authorization: Bearer JWT_TOKEN
 
 ---
 
-# 🔒 Authentication Flow
+## Invalid Token
 
-```
-User enters Email + Mobile
-
-          ↓
-
-Send OTP API
-
-          ↓
-
-Email OTP Sent
-+
-WhatsApp OTP Sent
-
-          ↓
-
-Verify OTP API
-
-          ↓
-
-OTP Verified
-(verified:true)
-
-          ↓
-
-Register User API
-
-          ↓
-
-Create Account
-
-          ↓
-
-Welcome Email Sent
-
-          ↓
-
-Welcome WhatsApp Message Sent
+```json
+{
+  "message": "Invalid Token"
+}
 ```
 
 ---
-
 
 # 🍽️ Food Menu APIs
 
 Food Menu module handles:
 
-- Adding food items
-- Fetching available food items
-- Updating food details
-- Deleting food items
+* Adding food items
+* Fetching available food items
+* Updating food details
+* Deleting food items
+* Admin Authorization
+* JWT Protected APIs
+
+---
+
+# Food Menu Authorization
+
+Food Menu APIs are divided into two categories.
+
+## Public APIs
+
+- View Food Menu
+
+## Admin APIs
+
+- Add Food Item
+- Update Food Item
+- Delete Food Item
+
+Only users having
+
+```text
+role = admin
+```
+
+can perform menu management operations.
+
+---
+
+# Authentication Required
+
+Protected APIs require JWT Token.
+
+Example:
+
+```http
+Authorization: Bearer JWT_TOKEN
+```
+
+JWT token is verified using:
+
+- protect Middleware
+
+After successful authentication,
+
+Admin Middleware checks:
+
+```javascript
+req.user.role === "admin"
+```
+
+If role is not admin,
+
+Response:
+
+```json
+{
+  "message": "Access Denied. Admin Only."
+}
+```
+
+---
+
+# Food Menu Access Control
+
+| API | User | Admin |
+|------|------|--------|
+| View Menu | ✅ | ✅ |
+| Add Menu | ❌ | ✅ |
+| Update Menu | ❌ | ✅ |
+| Delete Menu | ❌ | ✅ |
+
+---
+
+# Food Menu Request Flow
+
+```text
+Frontend
+
+      ↓
+
+Authorization Header
+
+      ↓
+
+protect Middleware
+
+      ↓
+
+JWT Verification
+
+      ↓
+
+Admin Middleware
+
+      ↓
+
+Role Validation
+
+      ↓
+
+Menu Controller
+
+      ↓
+
+MongoDB
+```
 
 ---
 
@@ -461,7 +758,7 @@ Food Menu module handles:
 
 ```http
 POST
-````
+```
 
 ## Endpoint
 
@@ -473,7 +770,17 @@ POST
 
 ## Description
 
-Admin can add new homemade food items into the menu.
+Adds a new homemade food item into the database.
+
+Only Admin users can access this API.
+
+---
+
+## Headers
+
+```http
+Authorization: Bearer JWT_TOKEN
+```
 
 ---
 
@@ -481,11 +788,10 @@ Admin can add new homemade food items into the menu.
 
 ```json
 {
-  "foodName": "Idli",
-  "category": "Breakfast",
-  "price": 40,
-  "description": "Soft Idli with Chutney",
-  "image": "idli.jpg"
+  "foodName": "Veg Biryani",
+  "category": "Lunch",
+  "price": 180,
+  "description": "Homemade Veg Biryani"
 }
 ```
 
@@ -498,12 +804,33 @@ Admin can add new homemade food items into the menu.
   "message": "Food Item Added Successfully",
   "menu": {
     "_id": "food_id",
-    "foodName": "Idli",
-    "category": "Breakfast",
-    "price": 40,
-    "description": "Soft Idli with Chutney",
-    "image": "idli.jpg"
+    "foodName": "Veg Biryani",
+    "category": "Lunch",
+    "price": 180,
+    "description": "Homemade Veg Biryani",
+    "createdAt": "2026-07-20T07:45:38.542Z",
+    "updatedAt": "2026-07-20T07:45:38.542Z"
   }
+}
+```
+
+---
+
+## Unauthorized Response
+
+```json
+{
+  "message": "Access Denied. Admin Only."
+}
+```
+
+---
+
+## Invalid Token
+
+```json
+{
+  "message": "Invalid Token"
 }
 ```
 
@@ -529,6 +856,12 @@ GET
 
 Returns all available food items.
 
+This API is public.
+
+No JWT token is required.
+
+Both Admin and User can access this API.
+
 ---
 
 ## Success Response
@@ -537,11 +870,17 @@ Returns all available food items.
 [
   {
     "_id": "food_id",
+    "foodName": "Veg Biryani",
+    "category": "Lunch",
+    "price": 180,
+    "description": "Homemade Veg Biryani"
+  },
+  {
+    "_id": "food_id",
     "foodName": "Idli",
     "category": "Breakfast",
     "price": 40,
-    "description": "Soft Idli with Chutney",
-    "image": "idli.jpg"
+    "description": "Soft Idli with Chutney"
   }
 ]
 ```
@@ -572,15 +911,30 @@ PUT
 
 ---
 
+## Description
+
+Updates an existing food item.
+
+Only Admin users can update menu details.
+
+---
+
+## Headers
+
+```http
+Authorization: Bearer JWT_TOKEN
+```
+
+---
+
 ## Request Body
 
 ```json
 {
-  "foodName": "Masala Idli",
-  "category": "Breakfast",
-  "price": 60,
-  "description": "Hot Masala Idli",
-  "image": "masala-idli.jpg"
+  "foodName": "Special Veg Biryani",
+  "category": "Lunch",
+  "price": 220,
+  "description": "Special Homemade Veg Biryani"
 }
 ```
 
@@ -590,7 +944,44 @@ PUT
 
 ```json
 {
-  "message": "Food Item Updated Successfully"
+  "message": "Food Item Updated Successfully",
+  "menu": {
+    "_id": "food_id",
+    "foodName": "Special Veg Biryani",
+    "category": "Lunch",
+    "price": 220,
+    "description": "Special Homemade Veg Biryani"
+  }
+}
+```
+
+---
+
+## Food Item Not Found
+
+```json
+{
+  "message": "Food Item Not Found"
+}
+```
+
+---
+
+## Unauthorized Response
+
+```json
+{
+  "message": "Access Denied. Admin Only."
+}
+```
+
+---
+
+## Invalid Token
+
+```json
+{
+  "message": "Invalid Token"
 }
 ```
 
@@ -620,13 +1011,170 @@ DELETE
 
 ---
 
+## Description
+
+Deletes an existing food item.
+
+Only Admin users can delete menu items.
+
+---
+
+## Headers
+
+```http
+Authorization: Bearer JWT_TOKEN
+```
+
+---
+
 ## Success Response
 
 ```json
 {
-  "message": "Food Item Deleted Successfully"
+  "message": "Food Item Deleted Successfully",
+  "menu": {
+    "_id": "food_id",
+    "foodName": "Veg Biryani"
+  }
 }
 ```
+
+---
+
+## Food Item Not Found
+
+```json
+{
+  "message": "Food Item Not Found"
+}
+```
+
+---
+
+## Unauthorized Response
+
+```json
+{
+  "message": "Access Denied. Admin Only."
+}
+```
+
+---
+
+## Invalid Token
+
+```json
+{
+  "message": "Invalid Token"
+}
+```
+
+---
+
+# Menu API Security
+
+The Food Menu module uses two middleware functions.
+
+---
+
+## 1. protect Middleware
+
+Responsibilities:
+
+- Verify JWT Token
+- Decode JWT Payload
+- Fetch Logged-in User
+- Store User Information inside
+
+```javascript
+req.user
+```
+
+---
+
+## 2. admin Middleware
+
+Responsibilities:
+
+Checks logged-in user's role.
+
+```javascript
+if (req.user.role !== "admin") {
+    return res.status(403).json({
+        message: "Access Denied. Admin Only."
+    });
+}
+```
+
+Only Admin users are allowed to:
+
+- Add Food Item
+- Update Food Item
+- Delete Food Item
+
+Normal users can only:
+
+- View Food Menu
+
+---
+
+# Menu Authorization Flow
+
+```text
+Admin Login
+
+      ↓
+
+JWT Generated
+
+      ↓
+
+Authorization Header
+
+      ↓
+
+protect Middleware
+
+      ↓
+
+JWT Verified
+
+      ↓
+
+admin Middleware
+
+      ↓
+
+Role Checked
+
+      ↓
+
+Menu Controller
+
+      ↓
+
+MongoDB Updated
+```
+
+---
+
+# Menu Middleware Used
+
+| Middleware | Purpose |
+|------------|----------|
+| protect | JWT Authentication |
+| admin | Role Based Authorization |
+
+---
+
+# Menu Module Summary
+
+| API | Authentication | Authorization |
+|------|---------------|---------------|
+| GET /api/menu | ❌ | Public |
+| POST /api/menu | ✅ | Admin Only |
+| PUT /api/menu/:id | ✅ | Admin Only |
+| DELETE /api/menu/:id | ✅ | Admin Only |
 
 ---
 
@@ -634,21 +1182,27 @@ DELETE
 
 Subscription module manages:
 
-* Monthly meal plans
-* Veg subscription
-* Non-Veg subscription
-* Lunch box setup charges
+* Monthly Meal Plans
+* Veg Subscription
+* Non-Veg Subscription
+* Lunch Box Setup Charges
+* Payment Status
+* User Subscription Details
 
 ---
 
 # Subscription Plans
 
+The application provides two monthly subscription plans.
+
 ## Veg Plan
 
 ```text
-Monthly Charge: ₹6500
-Lunch Box Setup: ₹1000
-Total Amount: ₹7500
+Monthly Charge : ₹6500
+
+Lunch Box Charge : ₹1000
+
+Total Amount : ₹7500
 ```
 
 ---
@@ -656,9 +1210,43 @@ Total Amount: ₹7500
 ## Non-Veg Plan
 
 ```text
-Monthly Charge: ₹7500
-Lunch Box Setup: ₹1000
-Total Amount: ₹8500
+Monthly Charge : ₹7500
+
+Lunch Box Charge : ₹1000
+
+Total Amount : ₹8500
+```
+
+---
+
+# Subscription Flow
+
+```text
+User Login
+
+        ↓
+
+Choose Subscription Plan
+
+        ↓
+
+Veg / Non-Veg
+
+        ↓
+
+Calculate Total Amount
+
+        ↓
+
+Create Subscription
+
+        ↓
+
+Payment Pending
+
+        ↓
+
+Proceed to Payment
 ```
 
 ---
@@ -674,14 +1262,22 @@ POST
 ## Endpoint
 
 ```http
-/api/subscriptions
+/ api/subscriptions
 ```
 
 ---
 
 ## Description
 
-Creates a monthly food subscription for a registered user.
+Creates a monthly food subscription for the logged-in user.
+
+---
+
+## Headers
+
+```http
+Authorization: Bearer JWT_TOKEN
+```
 
 ---
 
@@ -719,7 +1315,16 @@ Creates a monthly food subscription for a registered user.
 
 ```json
 {
-  "message": "Subscription Created Successfully"
+  "message": "Subscription Created Successfully",
+  "subscription": {
+    "_id": "subscription_id",
+    "userId": "user_id",
+    "planType": "Veg",
+    "amount": 6500,
+    "lunchBoxCharge": 1000,
+    "totalAmount": 7500,
+    "paymentStatus": "Pending"
+  }
 }
 ```
 
@@ -741,9 +1346,11 @@ GET
 
 ---
 
-## Description
+## Headers
 
-Returns all subscription records.
+```http
+Authorization: Bearer JWT_TOKEN
+```
 
 ---
 
@@ -752,13 +1359,9 @@ Returns all subscription records.
 ```json
 [
   {
-    "_id": "subscription_id",
-    "userId": "user_id",
-    "planType": "Veg",
-    "amount": 6500,
-    "lunchBoxCharge": 1000,
-    "totalAmount": 7500,
-    "paymentStatus": "Pending"
+    "_id":"subscription_id",
+    "planType":"Veg",
+    "paymentStatus":"Pending"
   }
 ]
 ```
@@ -769,9 +1372,65 @@ Returns all subscription records.
 
 Payment module handles:
 
-* Payment creation
-* Payment history
-* Payment details
+* Payment Creation
+* User Payment History
+* Admin Payment History
+* Payment Details
+* Payment Status
+* Role Based Authorization
+
+---
+
+# Payment Authorization
+
+Payment APIs are divided into two categories.
+
+## User APIs
+
+- Create Payment
+- View Own Payment History
+- View Own Transaction
+
+---
+
+## Admin APIs
+
+- View All Transactions
+- View Any Transaction
+
+---
+
+# Payment Flow
+
+```text
+User Login
+
+        ↓
+
+Choose Subscription
+
+        ↓
+
+Create Subscription
+
+        ↓
+
+Proceed Payment
+
+        ↓
+
+Payment Successful
+
+        ↓
+
+Transaction Stored
+
+        ↓
+
+User → Own History
+
+Admin → All Transactions
+```
 
 ---
 
@@ -793,7 +1452,33 @@ POST
 
 ## Description
 
-Stores payment transaction details after subscription payment.
+Creates payment after successful subscription.
+
+Automatically generates
+
+```text
+Transaction ID
+```
+
+Example
+
+```text
+TXN1753123456789
+```
+
+Subscription payment status becomes
+
+```text
+Success
+```
+
+---
+
+## Headers
+
+```http
+Authorization: Bearer JWT_TOKEN
+```
 
 ---
 
@@ -801,11 +1486,9 @@ Stores payment transaction details after subscription payment.
 
 ```json
 {
-  "userId": "user_id",
-  "transactionId": "TXN123456",
-  "amount": 7500,
-  "paymentMethod": "UPI",
-  "paymentStatus": "Success"
+  "userId":"user_id",
+  "subscriptionId":"subscription_id",
+  "amount":7500
 }
 ```
 
@@ -815,34 +1498,19 @@ Stores payment transaction details after subscription payment.
 
 ```json
 {
-  "message": "Payment Successful",
-  "payment": {
-    "_id": "payment_id",
-    "userId": "user_id",
-    "transactionId": "TXN123456",
-    "amount": 7500,
-    "paymentMethod": "UPI",
-    "paymentStatus": "Success",
-    "paymentDate": "2026-07-14T12:00:00.000Z",
-    "createdAt": "2026-07-14T12:00:00.000Z",
-    "updatedAt": "2026-07-14T12:00:00.000Z"
+  "message":"Payment Successful",
+  "payment":{
+      "_id":"payment_id",
+      "transactionId":"TXN1753123456789",
+      "amount":7500,
+      "paymentStatus":"Success"
   }
 }
 ```
 
 ---
 
-## Error Response
-
-```json
-{
-  "message": "Payment Failed"
-}
-```
-
----
-
-# 2. Get Payment History API
+# 2. User Payment History API
 
 ## Method
 
@@ -860,41 +1528,133 @@ GET
 
 ## Description
 
-Returns all payments made by users.
+Returns only the logged-in user's transactions.
+
+Users cannot view other users' payment history.
+
+---
+
+## Headers
+
+```http
+Authorization: Bearer JWT_TOKEN
+```
 
 ---
 
 ## Success Response
 
 ```json
-[
-  {
-    "_id": "payment_id",
-    "userId": "user_id",
-    "transactionId": "TXN123456",
-    "amount": 7500,
-    "paymentMethod": "UPI",
-    "paymentStatus": "Success",
-    "paymentDate": "2026-07-14T12:00:00.000Z",
-    "createdAt": "2026-07-14T12:00:00.000Z",
-    "updatedAt": "2026-07-14T12:00:00.000Z"
-  }
-]
-```
-
----
-
-## Error Response
-
-```json
 {
-  "message": "No Payment History Found"
+  "payments":[
+    {
+      "_id":"payment_id",
+      "transactionId":"TXN1753123456789",
+      "amount":7500,
+      "paymentStatus":"Success"
+    }
+  ]
 }
 ```
 
 ---
 
-# 3. Get Payment By ID API
+## Authorization
+
+Backend automatically filters
+
+```javascript
+Payment.find({
+    userId:req.user.id
+})
+```
+
+Therefore,
+
+```
+User A
+
+↓
+
+Only User A Transactions
+```
+
+```
+User B
+
+↓
+
+Only User B Transactions
+```
+
+---
+
+# 3. Admin Payment History API (NEW)
+
+## Method
+
+```http
+GET
+```
+
+## Endpoint
+
+```http
+/api/payment/admin/history
+```
+
+---
+
+## Description
+
+Returns every payment stored inside MongoDB.
+
+Only Admin users can access this API.
+
+---
+
+## Headers
+
+```http
+Authorization: Bearer JWT_TOKEN
+```
+
+---
+
+## Success Response
+
+```json
+{
+  "payments":[
+    {
+      "transactionId":"TXN1001",
+      "userId":"USER1"
+    },
+    {
+      "transactionId":"TXN1002",
+      "userId":"USER2"
+    },
+    {
+      "transactionId":"TXN1003",
+      "userId":"USER3"
+    }
+  ]
+}
+```
+
+---
+
+## Unauthorized
+
+```json
+{
+   "message":"Access Denied. Admin Only."
+}
+```
+
+---
+
+# 4. Get Payment By ID API
 
 ## Method
 
@@ -910,10 +1670,36 @@ GET
 
 ---
 
-## Example
+## Description
+
+Returns payment details.
+
+Authorization Rules
+
+### User
+
+Can view
+
+```
+Own Transaction Only
+```
+
+---
+
+### Admin
+
+Can view
+
+```
+Any Transaction
+```
+
+---
+
+## Headers
 
 ```http
-/api/payment/6874f123456789
+Authorization: Bearer JWT_TOKEN
 ```
 
 ---
@@ -922,33 +1708,550 @@ GET
 
 ```json
 {
-  "_id": "payment_id",
-  "userId": "user_id",
-  "transactionId": "TXN123456",
-  "amount": 7500,
-  "paymentMethod": "UPI",
-  "paymentStatus": "Success",
-  "paymentDate": "2026-07-14T12:00:00.000Z",
-  "createdAt": "2026-07-14T12:00:00.000Z",
-  "updatedAt": "2026-07-14T12:00:00.000Z"
+    "_id":"payment_id",
+    "transactionId":"TXN1753123456789",
+    "amount":7500,
+    "paymentStatus":"Success"
 }
 ```
 
 ---
 
-## Error Response
+## Unauthorized Response
 
 ```json
 {
-  "message": "Payment not found"
+   "message":"Access Denied"
 }
+```
+
+---
+
+## Payment Not Found
+
+```json
+{
+   "message":"Payment not found"
+}
+```
+
+---
+
+# Payment Database Example
+
+```json
+{
+    "_id":"payment_id",
+    "userId":"user_id",
+    "transactionId":"TXN1753123456789",
+    "amount":7500,
+    "paymentStatus":"Success",
+    "paymentDate":"2026-07-20T10:00:00.000Z"
+}
+```
+
+---
+
+# Payment Access Control
+
+| API | User | Admin |
+|------|------|--------|
+| POST /api/payment | ✅ | ✅ |
+| GET /api/payment/history | Own Only | All (if using Admin API) |
+| GET /api/payment/admin/history | ❌ | ✅ |
+| GET /api/payment/:id | Own Only | Any Transaction |
+
+---
+
+# Payment Security Flow
+
+```text
+JWT Token
+
+      ↓
+
+protect Middleware
+
+      ↓
+
+Logged-in User
+
+      ↓
+
+Check Role
+
+      ↓
+
+Admin ?
+
+      ↓
+
+YES --------------------> View All Transactions
+
+NO
+
+↓
+
+Check Owner
+
+↓
+
+Own Transaction ?
+
+↓
+
+YES
+
+↓
+
+Return Transaction
+
+↓
+
+NO
+
+↓
+
+Access Denied
+```
+
+---
+
+# Subscription & Payment Relationship
+
+```text
+User Registration
+
+        ↓
+
+Choose Subscription
+
+        ↓
+
+Subscription Created
+
+        ↓
+
+Payment Successful
+
+        ↓
+
+Transaction Saved
+
+        ↓
+
+Subscription Status Updated
+
+        ↓
+
+Payment History Updated
+```
+
+---
+
+# 💳 Payment APIs
+
+Payment module handles:
+
+* Payment Creation
+* Payment History
+* Payment Details
+* Payment Status
+* **User Transaction History**
+* **Admin Transaction Management**
+* **Role Based Transaction Access**
+
+---
+
+# Payment Authorization
+
+Payment APIs are now divided into two categories.
+
+## 👤 User APIs
+
+* Create Payment
+* View Own Payment History
+* View Own Payment Details
+
+A normal user can only access **their own transactions**.
+
+---
+
+## 👨‍💼 Admin APIs
+
+* View All Transactions
+* View Any Payment Details
+
+Only users having
+
+```text
+role = admin
+```
+
+can access all transaction records.
+
+---
+
+# Payment Flow
+
+```text
+User Login
+
+        ↓
+
+JWT Token Generated
+
+        ↓
+
+Choose Subscription
+
+        ↓
+
+Proceed Payment
+
+        ↓
+
+Payment Successful
+
+        ↓
+
+Transaction Stored
+
+        ↓
+
+User can View Own History
+
+        ↓
+
+Admin can View All Transactions
+```
+
+---
+
+# 1. Create Payment API
+
+## Method
+
+```http
+POST
+```
+
+## Endpoint
+
+```http
+/api/payment
+```
+
+---
+
+## Headers
+
+```http
+Authorization: Bearer JWT_TOKEN
+```
+
+---
+
+## Description
+
+Stores payment transaction after successful payment.
+
+Transaction automatically belongs to the logged-in user.
+
+---
+
+## Request Body
+
+```json
+{
+  "subscriptionId": "subscription_id",
+  "amount": 7500
+}
+```
+
+---
+
+## Success Response
+
+```json
+{
+  "message": "Payment Successful",
+  "payment": {
+    "_id": "payment_id",
+    "userId": "user_id",
+    "transactionId": "TXN1721484953",
+    "amount": 7500,
+    "paymentMethod": "UPI",
+    "paymentStatus": "Success"
+  }
+}
+```
+
+---
+
+# 2. User Payment History API
+
+## Method
+
+```http
+GET
+```
+
+## Endpoint
+
+```http
+/api/payment/history
+```
+
+---
+
+## Headers
+
+```http
+Authorization: Bearer JWT_TOKEN
+```
+
+---
+
+## Description
+
+Returns only the logged-in user's transactions.
+
+Backend automatically filters:
+
+```javascript
+userId = req.user._id
+```
+
+---
+
+## Success Response
+
+```json
+{
+  "payments": [
+    {
+      "_id": "payment_id",
+      "transactionId": "TXN1721484953",
+      "amount": 7500,
+      "paymentMethod": "UPI",
+      "paymentStatus": "Success",
+      "paymentDate": "2026-07-20T10:30:00.000Z"
+    }
+  ]
+}
+```
+
+---
+
+# 3. Admin - All Transactions API
+
+## Method
+
+```http
+GET
+```
+
+## Endpoint
+
+```http
+/api/payment/all
+```
+
+---
+
+## Headers
+
+```http
+Authorization: Bearer JWT_TOKEN
+```
+
+---
+
+## Description
+
+Returns every transaction stored in MongoDB.
+
+Only Admin can access this API.
+
+---
+
+## Success Response
+
+```json
+{
+  "payments": [
+    {
+      "userId": "user1",
+      "transactionId": "TXN111",
+      "amount": 7500
+    },
+    {
+      "userId": "user2",
+      "transactionId": "TXN222",
+      "amount": 8500
+    }
+  ]
+}
+```
+
+---
+
+## Unauthorized Response
+
+```json
+{
+  "message": "Access Denied. Admin Only."
+}
+```
+
+---
+
+# 4. Get Payment By ID API
+
+## Method
+
+```http
+GET
+```
+
+## Endpoint
+
+```http
+/api/payment/:id
+```
+
+---
+
+## Headers
+
+```http
+Authorization: Bearer JWT_TOKEN
+```
+
+---
+
+## Description
+
+Returns payment details.
+
+### User
+
+Can view only their own payment.
+
+### Admin
+
+Can view any payment.
+
+---
+
+## Success Response
+
+```json
+{
+  "_id": "payment_id",
+  "transactionId": "TXN1721484953",
+  "amount": 7500,
+  "paymentMethod": "UPI",
+  "paymentStatus": "Success",
+  "paymentDate": "2026-07-20T10:00:00.000Z"
+}
+```
+
+---
+
+## Unauthorized Response
+
+```json
+{
+  "message": "Access Denied"
+}
+```
+
+---
+
+# 🔐 Payment Security
+
+The Payment module now uses JWT Authentication and Role-Based Authorization.
+
+---
+
+## User Access
+
+Allowed:
+
+* Create Payment
+* View Own Payments
+* View Own Transaction Details
+
+---
+
+## Admin Access
+
+Allowed:
+
+* View All Transactions
+* View Any User Transaction
+
+---
+
+# Payment Database Example
+
+```json
+{
+  "_id": "payment_id",
+  "userId": "68761abcd123",
+  "transactionId": "TXN1721484953",
+  "amount": 7500,
+  "paymentMethod": "UPI",
+  "paymentStatus": "Success",
+  "paymentDate": "2026-07-20T10:30:00.000Z",
+  "createdAt": "2026-07-20T10:30:00.000Z",
+  "updatedAt": "2026-07-20T10:30:00.000Z"
+}
+```
+
+---
+
+# Subscription & Payment Relationship
+
+```text
+User Login
+
+        ↓
+
+Select Monthly Plan
+
+        ↓
+
+Create Subscription
+
+        ↓
+
+Payment Successful
+
+        ↓
+
+Payment Saved
+
+        ↓
+
+Subscription Updated
+
+        ↓
+
+User Dashboard Shows Own Transactions
+
+        ↓
+
+Admin Dashboard Shows All Transactions
 ```
 
 ---
 
 # ⚙️ Environment Variables (.env)
 
-Create a `.env` file inside the `Backend` folder.
+Create a `.env` file inside the **Backend** folder.
 
 ---
 
@@ -963,15 +2266,14 @@ MONGO_URI=mongodb+srv://<DB_USERNAME>:<DB_PASSWORD>@<CLUSTER_NAME>.mongodb.net/H
 # JWT Secret Key
 JWT_SECRET=your_secret_key
 
-
-# Email Configuration (Nodemailer)
+# Email Configuration
 EMAIL_USER=your_email@gmail.com
 EMAIL_PASS=your_gmail_app_password
-````
+```
 
 ---
 
-## Example `.env`
+## Example .env
 
 ```env
 PORT=5000
@@ -980,354 +2282,335 @@ MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/HomemadeFoodDB?ret
 
 JWT_SECRET=homemadefoodsecret
 
-
 EMAIL_USER=example@gmail.com
-EMAIL_PASS=your_app_password
+EMAIL_PASS=xxxxxxxxxxxxxxxx
 ```
 
 ---
 
-# 📋 Environment Variables Summary
+# 📧 Email Automation
 
-| Variable   | Description                           | Example                                                            |
-| ---------- | ------------------------------------- | ------------------------------------------------------------------ |
-| PORT       | Backend server running port           | 5000                                                               |
-| MONGO_URI  | MongoDB Atlas connection string       | mongodb+srv://username:password@cluster.mongodb.net/HomemadeFoodDB |
-| JWT_SECRET | Secret key for JWT authentication     | homemadefoodsecret                                                 |
-| EMAIL_USER | Gmail account used for sending emails | [example@gmail.com](mailto:example@gmail.com)                      |
-| EMAIL_PASS | Gmail App Password for Nodemailer     | xxxxxxxx                                                           |
+Features:
 
----
-
-# 📧 Email Notification
-
-The application uses **Nodemailer** for automated email communication.
-
----
-
-## Email Service
-
-Technology Used:
-
-* Node.js
-* Express.js
-* Nodemailer
-* Gmail App Password
-
----
-
-# Email Workflow
-
-```text
-User Registration
-
-        ↓
-
-User Data Saved in MongoDB
-
-        ↓
-
-sendEmail()
-
-        ↓
-
-Welcome Email Sent Automatically
-```
-
----
-
-# Email Notification Example
-
-```
-Hi Siva,
-
-Welcome to Homemade Food Delivery.
-
-Your registration has been completed successfully.
-
-Thank you for joining with us.
-```
+* Email OTP
+* Welcome Email
+* Registration Success Email
 
 ---
 
 # 💬 WhatsApp Automation
 
-## WhatsApp Service
-
-Previously Twilio WhatsApp API was used.
-
-Now Twilio has been removed.
-
-WhatsApp automation is implemented using:
+Project uses:
 
 * whatsapp-web.js
-* WhatsApp Web Session
-* QR Code Authentication
+* LocalAuth
+* QR Authentication
+* WhatsApp Session Storage
 
 ---
 
-# Installation
+# Notification Flow
 
-Install required packages:
+```text
+Generate OTP
 
-```bash
-npm install whatsapp-web.js qrcode-terminal
+      ↓
+
+Email OTP
+      +
+
+WhatsApp OTP
+
+      ↓
+
+Verify OTP
+
+      ↓
+
+Registration
+
+      ↓
+
+Welcome Email
+
+      ↓
+
+Welcome WhatsApp Message
 ```
 
 ---
 
-# WhatsApp Client Configuration
+# 🔒 Security Features
+
+The application implements multiple security layers to protect user accounts, payment information, and admin functionalities.
+
+---
+
+## 1. Password Encryption
+
+Passwords are encrypted before storing them in MongoDB.
+
+Technology Used:
+
+* bcrypt
 
 Example:
 
-```javascript
-const { Client, LocalAuth } = require("whatsapp-web.js");
-
-
-const client = new Client({
-
-    authStrategy: new LocalAuth()
-
-});
-```
-
----
-
-# QR Code Authentication Flow
-
-First time backend server starts:
+Original Password
 
 ```text
-Server Started
-
-        ↓
-
-WhatsApp Client Initializing
-
-        ↓
-
-QR Code Generated
-
-        ↓
-
-Scan QR Code using WhatsApp
-
-        ↓
-
-WhatsApp Client Ready
+Password@123
 ```
 
----
-
-After successful login:
-
-```
-✅ WhatsApp Client Ready
-```
-
-Session will be stored automatically.
-
-Next server restart:
-
-```
-Server Start
-
-        ↓
-
-Existing Session Loaded
-
-        ↓
-
-No QR Scan Required
-```
-
----
-
-# WhatsApp OTP Flow
+Stored Password
 
 ```text
-User enters Email + Mobile
+$2b$10$xxxxxxxxxxxxxxxxxxxxxxxx
+```
 
-        ↓
+---
+
+## 2. Email OTP Verification
+
+Before registration,
+
+Email OTP verification is mandatory.
+
+Flow
+
+```text
+Email
+
+↓
 
 Generate OTP
 
-        ↓
+↓
 
-Email OTP Sent
+Send Email OTP
 
-        ↓
+↓
 
-WhatsApp OTP Sent
-(using whatsapp-web.js)
+Verify Email OTP
 
-        ↓
+↓
 
-User verifies OTP
+Registration Allowed
 ```
 
 ---
 
-# Welcome WhatsApp Message Flow
+## 3. WhatsApp OTP Verification
+
+Mobile number verification is completed using WhatsApp OTP.
+
+Flow
 
 ```text
-Successful Registration
+Mobile Number
 
-        ↓
+↓
 
-sendWhatsapp()
+Generate OTP
 
-        ↓
+↓
 
-whatsapp-web.js
+Send WhatsApp OTP
 
-        ↓
+↓
 
-Welcome WhatsApp Message Sent
+Verify WhatsApp OTP
+
+↓
+
+Registration Allowed
 ```
 
 ---
 
-# WhatsApp Message Example
+## 4. JWT Authentication
 
-```
-Hi Siva,
+JWT protects private APIs.
 
-Welcome to Homemade Food Delivery.
-
-Your registration is completed successfully.
-
-Thank you for joining us.
-```
-
----
-
-# 🛠 Technology Stack
-
-| Feature             | Technology             |
-| ------------------- | ---------------------- |
-| Frontend            | React.js               |
-| Backend             | Node.js + Express.js   |
-| Database            | MongoDB Atlas          |
-| Authentication      | JWT                    |
-| Password Security   | bcrypt                 |
-| Email Service       | Nodemailer             |
-| WhatsApp Automation | whatsapp-web.js        |
-| OTP Management      | MongoDB OTP Collection |
-| API Testing         | Postman                |
-
----
-
-# 🔒 Security Notes
-
-The application follows these security practices:
-
-## 1. OTP Verification
-
-* User must verify Email OTP.
-* User must verify WhatsApp OTP.
-* Registration is blocked without OTP verification.
-
----
-
-## 2. Password Security
-
-Passwords are encrypted using bcrypt before storing in database.
-
-Example:
-
-```
-Original Password:
-
-Password@123
-
-
-Stored Password:
-
-$2a$10$xxxxxxxxxxxxxxxx
-```
-
----
-
-## 3. JWT Authentication
-
-Protected APIs require JWT token.
-
-Example:
+Protected APIs require
 
 ```http
 Authorization: Bearer JWT_TOKEN
 ```
 
----
+JWT Payload
 
-## 4. Environment Security
-
-Never upload `.env` file to GitHub.
-
-Add `.env` into `.gitignore`.
-
-Example:
-
-```gitignore
-.env
+```json
+{
+    "id":"user_id",
+    "role":"admin"
+}
 ```
 
 ---
 
-## 5. Sensitive Data Protection
+## 5. Role Based Authorization
 
-Never expose:
+The application supports two user roles.
 
-* Database password
-* JWT secret key
-* Email password
-* API credentials
+### User
+
+Permissions
+
+* Register
+* Login
+* View Menu
+* Create Subscription
+* Make Payment
+* View Own Payment History
+* View Own Transaction Details
+
+---
+
+### Admin
+
+Permissions
+
+* Login
+* Add Food Item
+* Update Food Item
+* Delete Food Item
+* View All Food Items
+* View All User Transactions
+* View Any Payment Details
+* Manage Menu
+
+---
+
+## Admin Middleware
+
+Admin APIs use
+
+```text
+adminMiddleware.js
+```
+
+Validation
+
+```javascript
+req.user.role === "admin"
+```
+
+If role is not admin
+
+```json
+{
+    "message":"Access Denied. Admin Only."
+}
+```
+
+---
+
+## 6. Payment Security
+
+Payment module is protected using JWT Authentication.
+
+Backend automatically identifies the logged-in user.
+
+Example
+
+```javascript
+const userId = req.user._id;
+```
+
+This ensures
+
+* Users can view only their own payment history.
+* Users cannot access another user's transactions.
+* Admin can access every transaction.
+
+---
+
+## 7. Protected APIs
+
+The following APIs require JWT Authentication.
+
+| Method | Endpoint             |
+| ------ | -------------------- |
+| GET    | /api/auth/profile    |
+| POST   | /api/menu            |
+| PUT    | /api/menu/:id        |
+| DELETE | /api/menu/:id        |
+| POST   | /api/subscriptions   |
+| GET    | /api/subscriptions   |
+| POST   | /api/payment         |
+| GET    | /api/payment/history |
+| GET    | /api/payment/all     |
+| GET    | /api/payment/:id     |
+
+---
+
+## 8. Environment Security
+
+Sensitive credentials are stored inside
+
+```text
+.env
+```
+
+Never upload
+
+```text
+.env
+```
+
+to GitHub.
+
+Always include
+
+```text
+.env
+```
+
+inside
+
+```text
+.gitignore
+```
 
 ---
 
 # 🔄 Complete Application Flow
 
 ```text
-User Registration
+User Opens Website
 
         ↓
 
-Send OTP API
+Registration Page
 
         ↓
 
-Email OTP
-+
-WhatsApp OTP
+Enter User Details
 
         ↓
 
-Verify OTP API
+Generate Email OTP
+        +
+Generate WhatsApp OTP
 
         ↓
 
-OTP Verified
+Verify Both OTPs
 
         ↓
 
-Register User API
+Registration Successful
 
         ↓
 
-Create User Account
+Welcome Email
+        +
+Welcome WhatsApp Message
 
         ↓
 
-Welcome Email Sent
-
-        ↓
-
-Welcome WhatsApp Message Sent
-
-        ↓
-
-User Login
+Login
 
         ↓
 
@@ -1335,43 +2618,175 @@ JWT Token Generated
 
         ↓
 
-Access Protected APIs
+Role Verified
+
+        ↓
+
+User Dashboard
+        +
+Admin Dashboard
+
+        ↓
+
+View Menu
+
+        ↓
+
+Choose Subscription
+
+        ↓
+
+Veg / Non-Veg
+
+        ↓
+
+Subscription Created
+
+        ↓
+
+Payment Successful
+
+        ↓
+
+Transaction Stored
+
+        ↓
+
+User Can View Own Transactions
+
+        ↓
+
+Admin Can View All Transactions
 ```
 
 ---
 
 # 📋 Complete API Summary
 
-| Method | Endpoint             | Description                       |
-| ------ | -------------------- | --------------------------------- |
-| POST   | /api/auth/send-otp   | Send Email and WhatsApp OTP       |
-| POST   | /api/auth/verify-otp | Verify Email and WhatsApp OTP     |
-| POST   | /api/auth/register   | Register New User                 |
-| POST   | /api/auth/login      | Login User and Generate JWT Token |
-| GET    | /api/auth/profile    | Get Logged-in User Profile        |
-| POST   | /api/menu            | Add New Food Item                 |
-| GET    | /api/menu            | Get All Food Items                |
-| PUT    | /api/menu/:id        | Update Food Item                  |
-| DELETE | /api/menu/:id        | Delete Food Item                  |
-| POST   | /api/subscriptions   | Create Subscription               |
-| GET    | /api/subscriptions   | Get All Subscriptions             |
-| POST   | /api/payment         | Create Payment                    |
-| GET    | /api/payment/history | Get Payment History               |
-| GET    | /api/payment/:id     | Get Payment Details By ID         |
+| Method | Endpoint             | Description                        |
+| ------ | -------------------- | ---------------------------------- |
+| POST   | /api/auth/send-otp   | Send Email OTP & WhatsApp OTP      |
+| POST   | /api/auth/verify-otp | Verify Email & WhatsApp OTP        |
+| POST   | /api/auth/register   | Register New User                  |
+| POST   | /api/auth/login      | Login User/Admin                   |
+| GET    | /api/auth/profile    | Get Logged-in User Profile         |
+| POST   | /api/menu            | Add Food Item (Admin Only)         |
+| GET    | /api/menu            | Get All Food Items                 |
+| PUT    | /api/menu/:id        | Update Food Item (Admin Only)      |
+| DELETE | /api/menu/:id        | Delete Food Item (Admin Only)      |
+| POST   | /api/subscriptions   | Create Subscription                |
+| GET    | /api/subscriptions   | Get All Subscriptions              |
+| POST   | /api/payment         | Create Payment                     |
+| GET    | /api/payment/history | Get Logged-in User Payment History |
+| GET    | /api/payment/all     | Get All Transactions (Admin Only)  |
+| GET    | /api/payment/:id     | Get Payment Details                |
 
 ---
 
-# ✅ Documentation Updated
+# 📌 Latest Backend Updates
 
-Implemented Features:
+The following enhancements were added to the project after the initial implementation.
 
-✔ Email OTP Verification
-✔ WhatsApp OTP Verification
-✔ OTP Security Before Registration
-✔ JWT Authentication
-✔ Password Encryption
-✔ Automated Welcome Email
-✔ WhatsApp Automation using whatsapp-web.js
-✔ Food Menu Management
-✔ Monthly Subscription Plans
-✔ Payment Management
+### Authentication Updates
+
+* Added Role-Based Login (User/Admin)
+* JWT now stores both User ID and Role
+* Protected Profile API
+* OTP verification required before registration
+
+---
+
+### Menu Module Updates
+
+* Add Menu restricted to Admin
+* Update Menu restricted to Admin
+* Delete Menu restricted to Admin
+* Public users can only view menu
+
+---
+
+### Payment Module Updates
+
+* Payment automatically linked with Logged-in User
+* Users can view only their own transaction history
+* Admin can view all payment transactions
+* Transaction ID generated automatically
+* Subscription status updated after successful payment
+
+---
+
+### Notification Updates
+
+* Email OTP using Nodemailer
+* WhatsApp OTP using whatsapp-web.js
+* Welcome Email after registration
+* Welcome WhatsApp message after registration
+
+---
+
+### Security Improvements
+
+* Password Encryption using bcrypt
+* JWT Authentication
+* Role-Based Authorization
+* Protected APIs
+* Admin Middleware
+* User-specific Payment Access
+* MongoDB Atlas Integration
+* Environment Variables Protection
+
+---
+
+# 🛠 Technology Stack
+
+## Backend
+
+* Node.js
+* Express.js
+
+## Database
+
+* MongoDB Atlas
+* Mongoose
+
+## Authentication
+
+* JWT
+* bcrypt
+
+## Notifications
+
+* Nodemailer
+* whatsapp-web.js
+* qrcode-terminal
+
+## API Testing
+
+* Postman
+
+## Version Control
+
+* Git
+* GitHub
+
+---
+
+# ✅ Project Status
+
+The backend now supports:
+
+* User Registration with Email & WhatsApp OTP
+* Secure Login with JWT
+* Role-Based Authentication (User/Admin)
+* Protected APIs
+* Admin Menu Management
+* Monthly Subscription System
+* Payment Management
+* User-Specific Transaction History
+* Admin Transaction Dashboard
+* Email Notifications
+* WhatsApp Notifications
+* MongoDB Atlas Database Integration
+
+---
+

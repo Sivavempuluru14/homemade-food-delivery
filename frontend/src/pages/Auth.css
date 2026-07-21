@@ -368,3 +368,31 @@
 .logout-btn:hover {
   background: #b71c1c;
 }
+
+.login-option-btn {
+  width: 100%;
+  padding: 14px;
+  margin: 12px 0;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #f0b77b, #f05c0c);
+  color: white;
+  font-size: 17px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.login-option-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(240, 92, 12, 0.35);
+}
+
+.login-option-btn.admin {
+  background: linear-gradient(135deg, #f0b77b, #f05c0c);
+}
+
+.login-option-btn.admin:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(240, 92, 12, 0.35);
+}
