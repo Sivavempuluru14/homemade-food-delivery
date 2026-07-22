@@ -19,6 +19,12 @@ const paymentSchema = new mongoose.Schema(
       required: true,
     },
 
+    planType: {
+      type: String,
+      enum: ["Veg", "Non-Veg"],
+      required: true,
+    },
+
     paymentMethod: {
       type: String,
       enum: ["UPI", "Card", "Net Banking", "Cash"],
@@ -40,5 +46,4 @@ const paymentSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
-
 module.exports = mongoose.model("Payment", paymentSchema);

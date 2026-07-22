@@ -19,12 +19,13 @@ function Payment() {
       const transactionId = "TXN" + Date.now();
 
       const paymentData = {
-        userId: user?._id || localStorage.getItem("userId"),
-        transactionId,
-        amount: selectedPlan.totalAmount,
-        paymentMethod,
-        paymentStatus: "Success",
-      };
+  userId: user?._id || localStorage.getItem("userId"),
+  transactionId,
+  amount: selectedPlan.totalAmount,
+  paymentMethod,
+  planType: selectedPlan.planType,
+  paymentStatus: "Success",
+};
 
       const response = await createPayment(paymentData);
 

@@ -37,6 +37,7 @@ function SubscriptionPlans() {
       "selectedPlan",
       JSON.stringify(selectedPlan)
     );
+    localStorage.setItem("checkoutPending", "true");
 
     // Go to Register page
     navigate("/register");

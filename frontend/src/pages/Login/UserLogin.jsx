@@ -52,13 +52,14 @@ localStorage.setItem("user", JSON.stringify(response.data.user));
 
       alert("Login Successful");
 
-    const selectedPlan = localStorage.getItem("selectedPlan");
+    const checkoutPending = localStorage.getItem("checkoutPending");
 
-        if (selectedPlan) {
-        navigate("/order-summary");
-        } else {
-        navigate("/profile");
-        }
+if (checkoutPending === "true") {
+  localStorage.removeItem("checkoutPending");
+  navigate("/order-summary");
+} else {
+  navigate("/");
+}
     } catch (error) {
       console.log(error);
       alert("Invalid Email or Password");

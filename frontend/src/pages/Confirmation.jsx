@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Confirmation.css";
 
@@ -8,6 +9,9 @@ function Confirmation() {
   const payment = JSON.parse(localStorage.getItem("payment"));
   const plan = JSON.parse(localStorage.getItem("selectedPlan"));
   console.log("Selected Plan in Confirmation:", plan);
+  useEffect(() => {
+  localStorage.removeItem("selectedPlan");
+}, []);
   return (
     <div className="confirmation-container">
       <div className="confirmation-card">
@@ -28,11 +32,19 @@ function Confirmation() {
 
         <p><strong>Status:</strong> {payment?.paymentStatus}</p>
 
-        <button
-          onClick={() => navigate("/payment-history")}
-        >
-          View Payment History
-        </button>
+       <button
+  onClick={() => {
+    console.log("Before:", localStorage.getItem("selectedPlan"));
+
+    localStorage.removeItem("selectedPlan");
+
+    console.log("After:", localStorage.getItem("selectedPlan"));
+
+    navigate("/payment-history");
+  }}
+>
+  View Payment History
+</button>
 
       </div>
     </div>

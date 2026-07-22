@@ -5,8 +5,12 @@ const Subscription = require("../models/Subscription");
 
 const createPayment = async (req, res) => {
   try {
-    const { subscriptionId, amount } = req.body;
-
+    const {
+  subscriptionId,
+  amount,
+  paymentMethod,
+  planType,
+} = req.body;
     // Logged-in User ID from JWT
     const userId = req.user._id;
 
@@ -47,12 +51,14 @@ const createPayment = async (req, res) => {
       "TXN" + Date.now();
 
     // Create Payment
-    const payment = await Payment.create({
-      userId,
-      transactionId,
-      amount,
-      paymentStatus: "Success",
-    });
+   const payment = await Payment.create({
+  userId,
+  transactionId,
+  amount,
+  paymentMethod,
+  planType,
+  paymentStatus: "Success",
+});
 
     // Update Subscription Payment Status
     if (subscriptionId) {

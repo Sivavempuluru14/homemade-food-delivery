@@ -47,7 +47,7 @@ function AdminLogin() {
         localStorage.setItem("user", JSON.stringify(response.data.user));
       alert("Admin Login Successful");
 
-      navigate("/profile");
+      navigate("/");
     } catch (error) {
       alert("Invalid Admin Credentials");
     }
